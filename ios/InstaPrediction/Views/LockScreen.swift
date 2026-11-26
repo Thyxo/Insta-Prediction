@@ -65,7 +65,8 @@ struct LockScreen: View {
             }
             .ignoresSafeArea()
         }
-        .statusBarHidden(true)
+        .statusBarHidden(false)
+        .preferredColorScheme(.dark)          // hvid statuslinje-tekst
         .persistentSystemOverlays(.hidden)   // vi tegner selv hjemmebjælken
         .onChange(of: app.lockPulse) { _, _ in
             guard app.s.lockBlink else { return }
@@ -88,18 +89,7 @@ struct LockScreen: View {
         return ZStack(alignment: .topLeading) {
             Color.clear.frame(width: W, height: H)
 
-            if s.lockStatus == "lock" {
-                StatusBar(carrier: s.lockCarrier, silent: s.lockSilent, signal: s.lockSignal,
-                          batteryPct: s.lockBatteryPct)
-                    .padding(.leading, 27).padding(.trailing, 33)
-                    .frame(width: W, height: 22)
-                    .position(x: W / 2, y: T * 0.497)
-                if s.lockGrabber {
-                    Capsule().fill(.white.opacity(0.9))
-                        .frame(width: 55, height: 2.3)
-                        .position(x: W - 46 - 27.5, y: T * 0.75)
-                }
-            }
+            // Statuslinjen er iOS' egen (ægte klokkeslæt, signal og batteri)
 
             Image(systemName: blink ? "lock.open.fill" : "lock.fill")
                 .font(.system(size: 17, weight: .semibold))
@@ -301,76 +291,6 @@ private struct Background: View {
         }
         .ignoresSafeArea()
         .animation(.easeInOut(duration: 0.3), value: blur)
-    }
-}
-
-private struct StatusBar: View {
-    let carrier: String
-    let silent: Bool
-    let signal: Int
-    let batteryPct: Bool
-    @State private var level: Float = UIDevice.current.batteryLevel
-
-    var body: some View {
-        HStack(spacing: 0) {
-            HStack(spacing: 6) {
-                Text(carrier).font(.system(size: 17, weight: .regular))
-                if silent { Image(systemName: "bell.slash.fill").font(.system(size: 14, weight: .semibold)) }
-            }
-            Spacer()
-            HStack(spacing: 7) {
-                SignalBars(active: signal)
-                Image(systemName: "wifi").font(.system(size: 15, weight: .semibold))
-                Battery(level: level < 0 ? 1 : Double(level), showPct: batteryPct)
-            }
-        }
-        .foregroundStyle(.white)
-        .onAppear {
-            UIDevice.current.isBatteryMonitoringEnabled = true
-            level = UIDevice.current.batteryLevel
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIDevice.batteryLevelDidChangeNotification)) { _ in
-            level = UIDevice.current.batteryLevel
-        }
-    }
-}
-
-/// Fire signalstreger som i iOS: aktive hvide, resten dæmpede
-private struct SignalBars: View {
-    let active: Int
-    var body: some View {
-        HStack(alignment: .bottom, spacing: 1.7) {
-            ForEach(0..<4, id: \.self) { i in
-                RoundedRectangle(cornerRadius: 1)
-                    .fill(.white.opacity(i < active ? 1 : 0.35))
-                    .frame(width: 3, height: 4.2 + CGFloat(i) * 2.5)
-            }
-        }
-        .frame(height: 12, alignment: .bottom)
-    }
-}
-
-/// iOS 26-batteri med procent i: tallet er skåret ud af fyldet
-private struct Battery: View {
-    let level: Double
-    let showPct: Bool
-    var body: some View {
-        HStack(spacing: 1) {
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 4).fill(.white.opacity(0.38))
-                RoundedRectangle(cornerRadius: 4).fill(.white)
-                    .frame(width: 25 * max(0.08, min(1, level)))
-                if showPct {
-                    Text("\(Int((level * 100).rounded()))")
-                        .font(.system(size: 11.5, weight: .bold))
-                        .frame(width: 25)
-                        .blendMode(.destinationOut)
-                }
-            }
-            .frame(width: 25, height: 12.5)
-            .compositingGroup()
-            RoundedRectangle(cornerRadius: 1).fill(.white.opacity(0.4)).frame(width: 1.4, height: 4)
-        }
     }
 }
 

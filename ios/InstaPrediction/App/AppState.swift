@@ -83,6 +83,7 @@ final class AppState {
         if s.notify { Notifier.ask() }
         connectRelay()
         updateKeepAlive()
+        scanFontFolder()
         if ClockFonts.list().isEmpty { Task { await findFonts(auto: true) } }
         await checkLogin()
     }
@@ -90,6 +91,7 @@ final class AppState {
     func phase(_ p: ScenePhase) {
         switch p {
         case .active:
+            scanFontFolder()
             if relay == nil || relayStatus != "online" { connectRelay() }
             Task { await checkLogin() }
         case .background:
@@ -197,6 +199,21 @@ final class AppState {
         } else {
             add(.ok, "Urskrifter fundet på telefonen: \(r.found.count)")
         }
+    }
+
+    /// Skrifter lagt i Bio-mappen i Filer
+    func scanFontFolder() {
+        let got = ClockFonts.scanDocuments()
+        if !got.isEmpty {
+            fontsVersion += 1
+            add(.ok, "Skrifter hentet fra Filer: \(got.count)")
+        }
+    }
+
+    func importFonts(_ urls: [URL]) {
+        let got = ClockFonts.importFiles(urls)
+        fontsVersion += 1
+        add(got.isEmpty ? .warn : .ok, got.isEmpty ? "Ingen skrift i filen" : "Importeret: \(got.count) skrift(er)")
     }
 
     func downloadFont(_ link: String) async {

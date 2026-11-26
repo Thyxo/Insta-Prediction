@@ -8,7 +8,7 @@ struct InstaPredictionApp: App {
 
     var body: some Scene {
         WindowGroup {
-            LiveView()
+            HomeView()
                 .environment(app)
                 .preferredColorScheme(.dark)
                 .task { await app.start() }

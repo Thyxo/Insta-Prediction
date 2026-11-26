@@ -13,10 +13,15 @@ Insta Prediction: native iOS-app (Swift/SwiftUI, XcodeGen, ingen .xcodeproj i gi
 - `Views/LockScreen.swift` + `PasscodeView.swift`: falsk iOS 26-låseskærm, inspireret af Thyxo/ClockPlus (samme genveje: stryg op = kode-skærm, langt tryk på uret = usynligt 3×4-tastatur, dobbelttryk = sort, 5 tryk øverst til højre = ud, hold øverst til venstre = panik).
 - Cifre → `AppState.lockCaptured` → `LockInput.interpret` (tal | kort CHaSeD | Mnemonica | dato) → feltet `lockField` → evt. afsløring efter `lockDelay`.
 - Ingen haptik fra Bio, mens låseskærmen vises (kun kode-skærmens "forkert kode"-vibration, som en rigtig iPhone).
-- Statuslinjen er tegnet (operatør + ægte batteriniveau); iOS' egen er skjult.
+- Statuslinjen er iOS' egen (ægte). Ejeren vil ikke have en tegnet.
 - Baggrund gemmes i Application Support (`Wallpaper`).
 - **Uret** (`Views/ClockView.swift`) tegnes med CoreText. Målt på ejerens iOS 26-låseskærm (1179×2556): `SFAdaptiveNumeric-VF.otf`, wght 600, wdth 100, HGHT ≈ 230; cifrene fylder 86 % af bredden og 28,4 % af højden, top = safe area + 55 pt. Dato `tors. 26. nov.` 22 pt semibold, top = safe area + 25 pt. Knapper 57 pt, centrum 75 pt fra siden og bund-inset + 45 pt.
-- **Apples skrifter må ikke i repoet eller IPA'en** (repo og releases er offentlige). `ClockFonts.findOnDevice()` finder dem i iOS på telefonen (FontServices.framework m.fl.) ved første start og kopierer dem til Application Support/Fonts. Reserve: import fra Filer eller direkte link.
+- **Apples skrifter må ikke i repoet eller IPA'en** (repo og releases er offentlige). `ClockFonts.findOnDevice()` finder dem i iOS på telefonen (FontServices.framework m.fl.) ved første start og kopierer dem til Application Support/Fonts. Reserve: zip eller .otf fra Filer (`App/ZipReader.swift` pakker ud), filer lagt i Bio-mappen i Filer (Documents, `UIFileSharingEnabled`) hentes ved start, eller direkte link.
+
+## UI
+- Hovedskærm `Views/HomeView.swift`: kun status-chips, bio-kort med felter, Afslør/Nulstil og Låseskærm. Alt andet ligger i Indstillinger (`SettingsView.swift`, rækker som i iOS).
+- Liquid glass via `Views/Glass.swift` (`glassCard`, `glassCapsule`, `glassCircle`): `glassEffect` på iOS 26 (bag `#if compiler(>=6.2)`), ellers materiale.
+- Hold hovedskærmen rolig: ingen nye sektioner dér uden ejerens ønske.
 
 ## Relæ-felter
 - Læser (standard): `google.q` (Fake Google), `force.name` / `force.digits` (Noter+), `result.value` (Calc+), `card.name`. Kan ændres pr. felt i indstillinger.

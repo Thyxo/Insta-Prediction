@@ -1,5 +1,6 @@
-// Apples urskrifter (fx SFAdaptiveNumeric-VF.otf fra iOS 26.3) importeres af brugeren og gemmes
-// kun på telefonen (Application Support/Fonts). De må ikke ligge i det offentlige repo.
+// Apples urskrifter (fx SFAdaptiveNumeric-VF.otf fra iOS 26.3) gemmes kun på telefonen
+// (Application Support/Fonts). De må ikke ligge i det offentlige repo eller IPA'en.
+// Kilder: iOS selv (findOnDevice), zip/otf fra Filer, Bio-mappen i Filer (scanDocuments) eller et link.
 // Variable akser (HGHT, wght, wdth) sættes via CoreText.
 import CoreText
 import Foundation
@@ -21,22 +22,75 @@ enum ClockFonts {
         return files.filter { f in [".otf", ".ttf", ".ttc"].contains { f.lowercased().hasSuffix($0) } }.sorted()
     }
 
-    /// Kopiér valgte filer ind (fra Filer/AirDrop). Returnerer navnene.
+    /// Kopiér valgte filer ind (fra Filer/AirDrop). Zip-filer pakkes ud. Returnerer navnene på skrifterne.
     @discardableResult
     static func importFiles(_ urls: [URL]) -> [String] {
         var out: [String] = []
         for u in urls {
             let scoped = u.startAccessingSecurityScopedResource()
             defer { if scoped { u.stopAccessingSecurityScopedResource() } }
-            let dest = dir.appendingPathComponent(u.lastPathComponent)
-            try? FileManager.default.removeItem(at: dest)
-            if (try? FileManager.default.copyItem(at: u, to: dest)) != nil, postScriptName(for: u.lastPathComponent) != nil {
-                out.append(u.lastPathComponent)
-            } else {
-                try? FileManager.default.removeItem(at: dest)
+            var data: Data?
+            NSFileCoordinator().coordinate(readingItemAt: u, options: [.withoutChanges], error: nil) { url in
+                data = try? Data(contentsOf: url)
             }
+            if let data { out += importData(name: u.lastPathComponent, data: data) }
+        }
+        return out
+    }
+
+    /// En skrift- eller zip-fil som data
+    static func importData(name: String, data: Data) -> [String] {
+        let isZip = data.prefix(4) == Data([0x50, 0x4b, 0x03, 0x04]) || name.lowercased().hasSuffix(".zip")
+        var out: [String] = []
+        if isZip {
+            for e in ZipReader.entries(data) {
+                let file = (e.name as NSString).lastPathComponent
+                guard !e.name.contains("__MACOSX"), !file.hasPrefix("."),
+                      ["otf", "ttf", "ttc"].contains((file as NSString).pathExtension.lowercased()),
+                      let d = ZipReader.extract(data, e) else { continue }
+                if save(file, d) { out.append(file) }
+            }
+        } else {
+            var file = name
+            if !["otf", "ttf", "ttc"].contains((file as NSString).pathExtension.lowercased()) { file += ".otf" }
+            if save(file, data) { out.append(file) }
         }
         cache.removeAll()
+        return out
+    }
+
+    private static func save(_ file: String, _ d: Data) -> Bool {
+        let dest = dir.appendingPathComponent(file)
+        try? FileManager.default.removeItem(at: dest)
+        names[file] = nil
+        registered.remove(file)
+        guard (try? d.write(to: dest, options: .atomic)) != nil, postScriptName(for: file) != nil else {
+            try? FileManager.default.removeItem(at: dest)
+            return false
+        }
+        return true
+    }
+
+    /// Skrift- og zip-filer lagt i appens mappe i Filer ("Bio" / Documents) hentes ind automatisk
+    @discardableResult
+    static func scanDocuments() -> [String] {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        guard let en = FileManager.default.enumerator(at: docs, includingPropertiesForKeys: nil) else { return [] }
+        var out: [String] = []
+        for case let u as URL in en {
+            let ext = u.pathExtension.lowercased()
+            guard ["otf", "ttf", "ttc", "zip"].contains(ext), let d = try? Data(contentsOf: u) else { continue }
+            let got = importData(name: u.lastPathComponent, data: d)
+            if !got.isEmpty {
+                out += got
+                try? FileManager.default.removeItem(at: u)   // ryd op, skriften ligger nu i appen
+            }
+        }
+        // En tom mappe gør, at "Bio" vises i Filer
+        let hint = docs.appendingPathComponent("Læg skrifter her.txt")
+        if !FileManager.default.fileExists(atPath: hint.path) {
+            try? "Læg SFAdaptiveNumeric-VF.otf eller hele zip-filen med urskrifter i denne mappe, og åbn Bio.".write(to: hint, atomically: true, encoding: .utf8)
+        }
         return out
     }
 

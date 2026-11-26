@@ -31,8 +31,6 @@ struct Settings: Codable, Equatable {
     var lockAutoReveal = true        // afslør, så snart input er modtaget
     var lockDelay = 2.0              // sek. før afsløring (så tilskueren ikke ser noget ske)
     var lockTimeSep = "."            // 10.47 (dansk) eller 10:47
-    var lockStatus = "lock"          // lock (operatør + batteri) | none
-    var lockCarrier = "Telia"
     var lockDim = 0.1                // gør baggrunden mørkere (0…0.6)
     var lockBlink = true             // hængelåsen blinker ved input/afsløring
     var lockShowZones = false        // øvelse: vis hemmelige zoner
@@ -43,10 +41,6 @@ struct Settings: Codable, Equatable {
     var lockHeight = 0.284           // cifrenes højde / skærmhøjde (iOS lader dig trække uret højere)
     var lockGlass = true             // glas-gradient på uret
     var lockDateShort = true         // "tors. 26. nov." (iOS 26) eller "Torsdag 26. november"
-    var lockSilent = false           // klokke med streg (lydløs) efter operatøren
-    var lockSignal = 4               // signalstreger 0…4
-    var lockBatteryPct = true        // tal i batteriet
-    var lockGrabber = true           // streg under batteriet (kontrolcenter)
     var lockPadlock = false          // hængelås altid synlig (ellers kun kort ved input, som Face ID)
     var lockFocus = ""               // fx "Forstyr ikke" (tom = skjult)
     var lockFooter = ""              // lille tekst i bunden, fx dit navn
