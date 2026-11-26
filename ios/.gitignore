@@ -1,0 +1,5 @@
+# Genereres af XcodeGen / Xcode
+InstaPrediction.xcodeproj/
+InstaPrediction/Info.plist
+build/
+DerivedData/

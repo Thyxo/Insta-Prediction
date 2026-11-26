@@ -89,6 +89,8 @@ Regler fra `magi.md`: dansk UI, panik = hold 1 sek. → neutral, tilstand går a
 
 | Fase | Indhold | Resultat |
 |---|---|---|
+> **Status:** første udkast af fase 0 + 1 er bygget i `ios/` (login, skabeloner, felter, relæ, afslør/nulstil, øve-tilstand, baggrund, notifikationer). Mangler test på rigtig telefon.
+
 | **0. Spike** (½ dag) | Mini-iPhone-app: WebView-login + knap "Skift bio" på test-konto. Mål tid fra kald → synlig hos tilskuer | Ved vi om det holder |
 | **1. MVP** | iPhone-appen får skabelon, manuel peek/input, "Afslør" og "Nulstil" | Første rigtige show-test |
 | **2. Input** | Koble Fake Google, Noter+, Calc+, Clock+ på via relæ-felter | "Capture methods" |

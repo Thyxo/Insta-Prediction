@@ -1,0 +1,46 @@
+# XcodeGen-projekt (der committes ingen .xcodeproj): `xcodegen` i ios/ laver InstaPrediction.xcodeproj.
+name: InstaPrediction
+options:
+  bundleIdPrefix: dk.thyxo
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+targets:
+  InstaPrediction:
+    type: application
+    platform: iOS
+    sources:
+      - path: InstaPrediction
+    info:
+      path: InstaPrediction/Info.plist
+      properties:
+        CFBundleDisplayName: Bio
+        CFBundleName: Bio
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDevelopmentRegion: da
+        LSRequiresIPhoneOS: true
+        LSApplicationQueriesSchemes: [instagram]
+        UIBackgroundModes: [audio]
+        UILaunchScreen: {}
+        UIRequiresFullScreen: true
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dk.thyxo.instaprediction
+        PRODUCT_NAME: InstaPrediction
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        GENERATE_INFOPLIST_FILE: NO
+        ENABLE_PREVIEWS: NO
+        SWIFT_STRICT_CONCURRENCY: minimal
+        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Manual

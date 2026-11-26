@@ -1,0 +1,22 @@
+{
+  "name": "Insta Prediction",
+  "identifier": "dk.thyxo.instaprediction.source",
+  "subtitle": "Forudsigelse i din rigtige Instagram-bio",
+  "iconURL": "https://raw.githubusercontent.com/Thyxo/Insta-Prediction/main/icons/icon-512.png",
+  "website": "https://github.com/Thyxo/Insta-Prediction",
+  "apps": [
+    {
+      "name": "Bio",
+      "bundleIdentifier": "dk.thyxo.instaprediction",
+      "developerName": "Thyxo",
+      "subtitle": "Insta Prediction",
+      "localizedDescription": "Tilskueren tænker frit på et ord, et kort eller et tal og finder det i din rigtige Instagram-bio. Input manuelt eller via relæet fra Fake Google, Noter+ og Calc+.",
+      "iconURL": "https://raw.githubusercontent.com/Thyxo/Insta-Prediction/main/icons/icon-512.png",
+      "tintColor": "C13584",
+      "category": "utilities",
+      "appPermissions": { "entitlements": [], "privacy": {} },
+      "versions": []
+    }
+  ],
+  "news": []
+}

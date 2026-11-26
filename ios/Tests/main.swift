@@ -1,0 +1,68 @@
+// Hurtig test af skabeloner, kort og relæ-stier (kører i CI før buildet):
+// swiftc ios/InstaPrediction/Model/*.swift ios/Tests/main.swift -o /tmp/t && /tmp/t
+import Foundation
+
+var failures = 0
+func check(_ ok: Bool, _ msg: String) { if !ok { failures += 1; print("FEJL:", msg) } else { print("ok:", msg) } }
+
+// 1. Felter og udfyldning
+let t = "🃏 {kort|kort} · {by|titel} · {by}"
+check(TemplateEngine.fields(in: t) == ["kort", "by"], "felter i rækkefølge uden dubletter")
+let r1 = TemplateEngine.render(t, values: ["kort": "kh", "by": "bornholm"])
+check(r1.text == "🃏 hjerter konge · Bornholm · bornholm", "udfyldning med filtre: \(r1.text)")
+check(r1.missing.isEmpty, "intet mangler")
+let r2 = TemplateEngine.render(t, values: ["kort": "  "])
+check(r2.missing == ["kort", "by"], "tomme felter mangler: \(r2.missing)")
+check(r2.text == t, "manglende felter står urørt")
+check(TemplateEngine.render("{ord|stor}", values: ["ord": "æble"]).text == "ÆBLE", "stor med æøå")
+check(TemplateEngine.render("Tal: {tal|tal}", values: ["tal": "nr. 4 2"]).text == "Tal: 42", "kun cifre")
+check(TemplateEngine.render("{x", values: ["x": "1"]).text == "{x", "ufærdig parentes er tekst")
+check(TemplateEngine.render("{ugyldig felt} {a}", values: ["a": "1"]).text == "{ugyldig felt} 1", "ugyldigt navn er tekst")
+check(TemplateEngine.fields(in: "{a {b}") == ["b"], "indlejret start")
+check(TemplateEngine.render(String(repeating: "x", count: 151), values: [:]).tooLong, "over 150 tegn")
+check(TemplateEngine.render("👋", values: [:]).length == 2, "emoji tæller som UTF-16")
+
+// 2. Kort
+let cards: [(String, String?)] = [
+    ("kh", "hjerter konge"), ("KH", "hjerter konge"), ("kk", "klør konge"), ("10s", "spar 10"),
+    ("ts", "spar 10"), ("Ar", "ruder es"), ("qd", "ruder dronning"), ("js", "spar knægt"),
+    ("7♣️", "klør 7"), ("K♥", "hjerter konge"), ("hjerter konge", "hjerter konge"),
+    ("konge af hjerter", "hjerter konge"), ("7 spar", "spar 7"), ("es i spar", "spar es"),
+    ("ruder es", "ruder es"), ("x", nil), ("1x", nil), ("11h", nil), ("", nil),
+]
+for (inp, want) in cards { check(Card.parse(inp)?.name == want, "kort \"\(inp)\" → \(Card.parse(inp)?.name ?? "nil")") }
+check(Card.parse("qh")?.short == "Q♥️", "kortikon")
+
+// 3. Relæ-stier
+let state: [String: Any] = [
+    "google": ["q": " Bornholm ", "at": 1_700_000_000_000.0],
+    "result": ["value": 42, "at": 5],
+    "force": ["name": "", "digits": "1234"],
+    "x": "tekst",
+]
+check(RelayPath.lookup(state, "google.q")?.value == "Bornholm", "google.q")
+check(RelayPath.lookup(state, "google.q")?.at == 1_700_000_000_000, "tidsstempel")
+check(RelayPath.lookup(state, "result.value")?.value == "42", "tal som tekst")
+check(RelayPath.lookup(state, "force.name") == nil, "tom værdi = intet")
+check(RelayPath.lookup(state, "force.digits")?.at == nil, "intet tidsstempel")
+check(RelayPath.lookup(state, "nope.q") == nil, "ukendt sti")
+check(RelayPath.lookup(state, "x")?.value == "tekst", "felt i roden")
+if let d = try? JSONSerialization.jsonObject(with: Data(#"{"result":{"value":7.0,"at":1}}"#.utf8)) as? [String: Any] {
+    check(RelayPath.lookup(d, "result.value")?.value == "7", "JSON-tal 7.0 → 7")
+}
+
+// 4. Afstand mellem ændringer
+var gate = RateGate(minGap: 15)
+check(gate.wait(now: 100) == 0, "første ændring med det samme")
+gate.mark(now: 100)
+check(gate.wait(now: 105) == 10, "venter resten af afstanden")
+check(gate.wait(now: 200) == 0, "efter afstanden")
+
+// 5. Standardindstillinger
+let s = Settings()
+check(s.allFields == ["ord", "kort", "tal", "navn"], "felter i standardskabeloner: \(s.allFields)")
+check(s.practice, "starter i øve-tilstand")
+for f in s.allFields { check(s.sources[f] != nil, "kilde for \(f)") }
+
+print(failures == 0 ? "ALLE TESTS OK" : "\(failures) FEJL")
+exit(failures == 0 ? 0 : 1)
