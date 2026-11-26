@@ -15,6 +15,8 @@ Insta Prediction: native iOS-app (Swift/SwiftUI, XcodeGen, ingen .xcodeproj i gi
 - Ingen haptik fra Bio, mens låseskærmen vises (kun kode-skærmens "forkert kode"-vibration, som en rigtig iPhone).
 - Statuslinjen er tegnet (operatør + ægte batteriniveau); iOS' egen er skjult.
 - Baggrund gemmes i Application Support (`Wallpaper`).
+- **Uret** (`Views/ClockView.swift`) tegnes med CoreText. Målt på ejerens iOS 26-låseskærm (1179×2556): `SFAdaptiveNumeric-VF.otf`, wght 600, wdth 100, HGHT ≈ 230; cifrene fylder 86 % af bredden og 28,4 % af højden, top = safe area + 55 pt. Dato `tors. 26. nov.` 22 pt semibold, top = safe area + 25 pt. Knapper 57 pt, centrum 75 pt fra siden og bund-inset + 45 pt.
+- **Apples skrifter må ikke i repoet** (det er offentligt). Brugeren importerer `.otf` i appen (`App/ClockFonts.swift`, Application Support/Fonts), som ClockPlus gør med IndexedDB.
 
 ## Relæ-felter
 - Læser (standard): `google.q` (Fake Google), `force.name` / `force.digits` (Noter+), `result.value` (Calc+), `card.name`. Kan ændres pr. felt i indstillinger.

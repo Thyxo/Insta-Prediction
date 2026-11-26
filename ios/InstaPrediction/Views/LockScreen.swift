@@ -27,7 +27,7 @@ struct LockScreen: View {
             ZStack {
                 Background(image: app.wallpaper, dim: app.s.lockDim, blur: showCode)
 
-                lockContent(ins: ins)
+                lockContent(ins: ins, size: CGSize(width: geo.size.width + ins.leading + ins.trailing, height: geo.size.height + ins.top + ins.bottom))
                     .offset(y: showCode ? -60 : min(0, drag) * 0.35)
                     .opacity(showCode ? 0 : 1 - Double(min(1, -min(0, drag) / 300)))
                     .contentShape(Rectangle())
@@ -66,7 +66,7 @@ struct LockScreen: View {
             .ignoresSafeArea()
         }
         .statusBarHidden(true)
-        .persistentSystemOverlays(.visible)
+        .persistentSystemOverlays(.hidden)   // vi tegner selv hjemmebjælken
         .onChange(of: app.lockPulse) { _, _ in
             guard app.s.lockBlink else { return }
             withAnimation(.easeInOut(duration: 0.18)) { blink = true }
@@ -78,46 +78,81 @@ struct LockScreen: View {
     }
 
     // MARK: Låseskærmen
+    // Placeringer målt på en rigtig iOS 26-låseskærm (393×852 pt, top 59 pt, bund 34 pt).
 
-    private func lockContent(ins: EdgeInsets) -> some View {
-        VStack(spacing: 0) {
-            if app.s.lockStatus == "lock" {
-                StatusBar(carrier: app.s.lockCarrier)
-                    .frame(height: max(20, ins.top * 0.9))
-                    .padding(.horizontal, ins.top > 50 ? 34 : 22)
-            } else {
-                Color.clear.frame(height: max(20, ins.top * 0.9))
+    private func lockContent(ins: EdgeInsets, size: CGSize) -> some View {
+        let W = size.width, H = size.height, T = max(ins.top, 20), B = ins.bottom
+        let s = app.s
+        let clockH = H * s.lockHeight
+        let showLock = s.lockPadlock || blink
+        return ZStack(alignment: .topLeading) {
+            Color.clear.frame(width: W, height: H)
+
+            if s.lockStatus == "lock" {
+                StatusBar(carrier: s.lockCarrier, silent: s.lockSilent, signal: s.lockSignal,
+                          batteryPct: s.lockBatteryPct)
+                    .padding(.leading, 27).padding(.trailing, 33)
+                    .frame(width: W, height: 22)
+                    .position(x: W / 2, y: T * 0.497)
+                if s.lockGrabber {
+                    Capsule().fill(.white.opacity(0.9))
+                        .frame(width: 55, height: 2.3)
+                        .position(x: W - 46 - 27.5, y: T * 0.75)
+                }
             }
 
             Image(systemName: blink ? "lock.open.fill" : "lock.fill")
-                .font(.system(size: 19, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(.white)
-                .frame(height: 26)
-                .padding(.top, 6)
                 .contentTransition(.symbolEffect(.replace))
+                .opacity(showLock ? 1 : 0)
+                .position(x: W / 2, y: T + 10)
 
             TimelineView(.periodic(from: .now, by: 1)) { ctx in
-                VStack(spacing: app.s.lockClockTall ? -2 : 0) {
-                    Text(Self.dateText(ctx.date))
-                        .font(.system(size: 21, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.92))
-                    ClockText(text: Self.timeText(ctx.date, sep: app.s.lockTimeSep), tall: app.s.lockClockTall)
+                ZStack(alignment: .topLeading) {
+                    Text(Self.dateText(ctx.date, short: s.lockDateShort))
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(.white.opacity(s.lockGlass ? 0.93 : 1))
+                        .fixedSize()
+                        .position(x: W / 2, y: T + 33)
+                    clock(Self.timeText(ctx.date, sep: s.lockTimeSep), W: W, H: H, h: clockH)
+                        .frame(width: W, height: clockH)
+                        .contentShape(Rectangle())
                         .onLongPressGesture(minimumDuration: 0.5) { startSecret() }
+                        .position(x: W / 2, y: T + 55 + clockH / 2)
                 }
+                .frame(width: W, height: H)
             }
-            .padding(.top, 8)
-            .shadow(color: .black.opacity(0.18), radius: 8, y: 2)
+            .shadow(color: .black.opacity(0.12), radius: 10, y: 2)
 
-            Spacer()
+            QuickButton(symbol: "flashlight.off.fill").position(x: 75, y: H - B - 45)
+            QuickButton(symbol: "camera.fill").position(x: W - 75, y: H - B - 45)
 
-            HStack {
-                QuickButton(symbol: "flashlight.off.fill")
-                Spacer()
-                QuickButton(symbol: "camera.fill")
+            if !s.lockFocus.isEmpty {
+                Label(s.lockFocus, systemImage: "moon.fill")
+                    .font(.system(size: 17, weight: .regular))
+                    .foregroundStyle(.white)
+                    .fixedSize()
+                    .position(x: W / 2, y: H - B - 45)
             }
-            .padding(.horizontal, 46)
-            .padding(.bottom, max(14, ins.bottom + 6))
+            if !s.lockFooter.isEmpty {
+                Text(s.lockFooter)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.92))
+                    .fixedSize()
+                    .position(x: W / 2, y: H - max(B, 34) + 2)
+            }
+            Capsule().fill(.white)
+                .frame(width: 140, height: 5)
+                .position(x: W / 2, y: H - 10.5)
         }
+        .frame(width: W, height: H)
+    }
+
+    private func clock(_ text: String, W: CGFloat, H: CGFloat, h: CGFloat) -> some View {
+        // Apples skrift hvis importeret (Indstil låseskærm → Urskrift), ellers strakt systemskrift
+        ClockView(text: text, fontFile: ClockFonts.resolve(app.s.lockFont), weight: app.s.lockWeight,
+                  heightRatio: app.s.lockHeight, widthRatio: 0.86, screenHeight: H, glass: app.s.lockGlass)
     }
 
     // MARK: Usynligt tastatur
@@ -226,10 +261,10 @@ struct LockScreen: View {
         return String(format: "%d%@%02d", c.hour ?? 0, sep, c.minute ?? 0)
     }
 
-    static func dateText(_ d: Date) -> String {
+    static func dateText(_ d: Date, short: Bool) -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "da_DK")
-        f.dateFormat = "EEEE d. MMMM"
+        f.dateFormat = short ? "EEE d. MMM" : "EEEE d. MMMM"
         let s = f.string(from: d)
         return s.prefix(1).uppercased() + s.dropFirst()
     }
@@ -269,41 +304,26 @@ private struct Background: View {
     }
 }
 
-private struct ClockText: View {
-    let text: String
-    let tall: Bool
-
-    var body: some View {
-        Text(text)
-            .font(.system(size: tall ? 104 : 92, weight: tall ? .bold : .semibold))
-            .fontWidth(tall ? .condensed : .standard)
-            .monospacedDigit()
-            .kerning(tall ? -1 : -2)
-            .foregroundStyle(
-                LinearGradient(colors: [.white, .white.opacity(tall ? 0.78 : 0.95)], startPoint: .top, endPoint: .bottom)
-            )
-            .scaleEffect(x: 1, y: tall ? 1.42 : 1, anchor: .top)
-            .frame(height: tall ? 150 : 110, alignment: .top)
-            .lineLimit(1)
-            .minimumScaleFactor(0.5)
-            .padding(.horizontal, 20)
-    }
-}
-
 private struct StatusBar: View {
     let carrier: String
+    let silent: Bool
+    let signal: Int
+    let batteryPct: Bool
     @State private var level: Float = UIDevice.current.batteryLevel
 
     var body: some View {
-        HStack(spacing: 6) {
-            Text(carrier).font(.system(size: 16, weight: .semibold))
+        HStack(spacing: 0) {
+            HStack(spacing: 6) {
+                Text(carrier).font(.system(size: 17, weight: .regular))
+                if silent { Image(systemName: "bell.slash.fill").font(.system(size: 14, weight: .semibold)) }
+            }
             Spacer()
-            Image(systemName: "cellularbars")
-            Image(systemName: "wifi")
-            Image(systemName: batterySymbol)
-                .symbolRenderingMode(.hierarchical)
+            HStack(spacing: 7) {
+                SignalBars(active: signal)
+                Image(systemName: "wifi").font(.system(size: 15, weight: .semibold))
+                Battery(level: level < 0 ? 1 : Double(level), showPct: batteryPct)
+            }
         }
-        .font(.system(size: 15, weight: .semibold))
         .foregroundStyle(.white)
         .onAppear {
             UIDevice.current.isBatteryMonitoringEnabled = true
@@ -313,29 +333,79 @@ private struct StatusBar: View {
             level = UIDevice.current.batteryLevel
         }
     }
+}
 
-    private var batterySymbol: String {
-        guard level >= 0 else { return "battery.100percent" }
-        switch level {
-        case ..<0.13: return "battery.0percent"
-        case ..<0.38: return "battery.25percent"
-        case ..<0.63: return "battery.50percent"
-        case ..<0.88: return "battery.75percent"
-        default: return "battery.100percent"
+/// Fire signalstreger som i iOS: aktive hvide, resten dæmpede
+private struct SignalBars: View {
+    let active: Int
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 1.7) {
+            ForEach(0..<4, id: \.self) { i in
+                RoundedRectangle(cornerRadius: 1)
+                    .fill(.white.opacity(i < active ? 1 : 0.35))
+                    .frame(width: 3, height: 4.2 + CGFloat(i) * 2.5)
+            }
+        }
+        .frame(height: 12, alignment: .bottom)
+    }
+}
+
+/// iOS 26-batteri med procent i: tallet er skåret ud af fyldet
+private struct Battery: View {
+    let level: Double
+    let showPct: Bool
+    var body: some View {
+        HStack(spacing: 1) {
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 4).fill(.white.opacity(0.38))
+                RoundedRectangle(cornerRadius: 4).fill(.white)
+                    .frame(width: 25 * max(0.08, min(1, level)))
+                if showPct {
+                    Text("\(Int((level * 100).rounded()))")
+                        .font(.system(size: 11.5, weight: .bold))
+                        .frame(width: 25)
+                        .blendMode(.destinationOut)
+                }
+            }
+            .frame(width: 25, height: 12.5)
+            .compositingGroup()
+            RoundedRectangle(cornerRadius: 1).fill(.white.opacity(0.4)).frame(width: 1.4, height: 4)
         }
     }
 }
 
+/// Lommelygte/kamera: 57 pt "liquid glass"
 private struct QuickButton: View {
     let symbol: String
-
     var body: some View {
         Image(systemName: symbol)
-            .font(.system(size: 21, weight: .medium))
+            .font(.system(size: 22, weight: .medium))
             .foregroundStyle(.white)
-            .frame(width: 54, height: 54)
-            .background(Circle().fill(.ultraThinMaterial))
-            .overlay(Circle().strokeBorder(.white.opacity(0.18), lineWidth: 0.6))
-            .environment(\.colorScheme, .dark)
+            .frame(width: 57, height: 57)
+            .modifier(GlassCircle())
+    }
+}
+
+private struct GlassCircle: ViewModifier {
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            content.glassEffect(.regular, in: Circle())
+        } else {
+            fallback(content)
+        }
+        #else
+        fallback(content)
+        #endif
+    }
+
+    private func fallback(_ c: Content) -> some View {
+        c.background(
+            Circle().fill(LinearGradient(colors: [.white.opacity(0.22), .white.opacity(0.08), .white.opacity(0.14)],
+                                         startPoint: .topLeading, endPoint: .bottomTrailing))
+        )
+        .background(Circle().fill(.ultraThinMaterial).environment(\.colorScheme, .light).opacity(0.35))
+        .overlay(Circle().strokeBorder(.white.opacity(0.3), lineWidth: 0.8))
     }
 }

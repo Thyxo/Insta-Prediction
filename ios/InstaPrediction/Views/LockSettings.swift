@@ -1,10 +1,13 @@
 // Indstillinger for låseskærm-input: felt, fortolkning, afsløring og udseende.
 import PhotosUI
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct LockSettings: View {
     @Environment(AppState.self) private var app
     @State private var pick: PhotosPickerItem?
+    @State private var importing = false
+    @State private var fonts = ClockFonts.list()
 
     var body: some View {
         @Bindable var app = app
@@ -62,21 +65,72 @@ struct LockSettings: View {
                     Text("Mørkere baggrund: \(Int(app.s.lockDim * 100)) %")
                     Slider(value: $app.s.lockDim, in: 0...0.6)
                 }
-                Toggle("Højt ur (iOS 26)", isOn: $app.s.lockClockTall)
+                Picker("Dato", selection: $app.s.lockDateShort) {
+                    Text("tors. 26. nov.").tag(true)
+                    Text("Torsdag 26. november").tag(false)
+                }
                 Picker("Klokkeslæt", selection: $app.s.lockTimeSep) {
                     Text("10.47").tag(".")
                     Text("10:47").tag(":")
                 }
                 .pickerStyle(.segmented)
-                Picker("Statuslinje", selection: $app.s.lockStatus) {
-                    Text("Operatør + batteri").tag("lock")
-                    Text("Ingen").tag("none")
-                }
-                if app.s.lockStatus == "lock" {
-                    TextField("Operatør", text: $app.s.lockCarrier)
-                }
+                TextField("Fokus i bunden, fx Forstyr ikke", text: $app.s.lockFocus)
+                TextField("Lille tekst i bunden, fx dit navn", text: $app.s.lockFooter)
+                Toggle("Hængelås altid synlig", isOn: $app.s.lockPadlock)
             } header: { Text("Udseende") } footer: {
-                Text("Vælg samme billede som din rigtige låseskærm (fra Fotos).")
+                Text("Vælg samme billede som din rigtige låseskærm (fra Fotos). iOS 26 viser ingen hængelås; uden den åbner den kun kort ved input, som et Face ID-forsøg.")
+            }
+
+            Section {
+                if fonts.isEmpty {
+                    Text("Ingen skrift importeret. Uret bruger en strakt systemskrift.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    Picker("Skrift", selection: $app.s.lockFont) {
+                        Text("Auto (\(ClockFonts.preferred.replacingOccurrences(of: "-VF.otf", with: "")))").tag("")
+                        ForEach(fonts, id: \.self) { f in Text(f.replacingOccurrences(of: "-VF.otf", with: "")).tag(f) }
+                    }
+                }
+                Button {
+                    importing = true
+                } label: {
+                    Label("Importér skriftfiler (.otf) …", systemImage: "textformat")
+                }
+                if !fonts.isEmpty {
+                    Button("Slet importerede skrifter", role: .destructive) {
+                        for f in fonts { ClockFonts.delete(f) }
+                        fonts = ClockFonts.list()
+                        app.s.lockFont = ""
+                    }
+                }
+                VStack(alignment: .leading) {
+                    Text("Tykkelse: \(Int(app.s.lockWeight))")
+                    Slider(value: $app.s.lockWeight, in: 200...900, step: 10)
+                }
+                VStack(alignment: .leading) {
+                    Text("Højde: \(String(format: "%.1f", app.s.lockHeight * 100)) % af skærmen")
+                    Slider(value: $app.s.lockHeight, in: 0.12...0.45, step: 0.002)
+                }
+                Toggle("Glas-effekt", isOn: $app.s.lockGlass)
+                Button("Som min iPhone (målt)") {
+                    app.s.lockWeight = 600
+                    app.s.lockHeight = 0.284
+                    app.s.lockGlass = true
+                    app.s.lockDateShort = true
+                    app.s.lockPadlock = false
+                }
+            } header: { Text("Urskrift") } footer: {
+                Text("Brug Apples egne urskrifter fra iOS 26.3: send SFAdaptiveNumeric-VF.otf (og gerne flere) til telefonen via AirDrop eller Filer, og importér dem her. De gemmes kun på telefonen. Målt på din låseskærm: tykkelse 600, højde 28,4 %.")
+            }
+
+            Section {
+                TextField("Operatør", text: $app.s.lockCarrier)
+                Toggle("Lydløs-ikon", isOn: $app.s.lockSilent)
+                Stepper("Signal: \(app.s.lockSignal) af 4 streger", value: $app.s.lockSignal, in: 0...4)
+                Toggle("Procent i batteriet", isOn: $app.s.lockBatteryPct)
+                Toggle("Streg under batteriet", isOn: $app.s.lockGrabber)
+            } header: { Text("Statuslinje") } footer: {
+                Text("Batteriniveauet er telefonens rigtige. Klokken vises ikke i statuslinjen på en låseskærm.")
             }
 
             Section {
@@ -92,6 +146,14 @@ struct LockSettings: View {
                 row("Panik", "Hold øverst til venstre 1 sek.")
                 row("Tilbage til Bio", "5 tryk øverst til højre")
             }
+        }
+        .fileImporter(isPresented: $importing,
+                      allowedContentTypes: [UTType(filenameExtension: "otf") ?? .font, UTType(filenameExtension: "ttf") ?? .font, .font],
+                      allowsMultipleSelection: true) { result in
+            guard case .success(let urls) = result else { return }
+            let got = ClockFonts.importFiles(urls)
+            fonts = ClockFonts.list()
+            app.add(got.isEmpty ? .warn : .ok, got.isEmpty ? "Ingen skrift kunne læses" : "Importeret: \(got.joined(separator: ", "))")
         }
         .navigationTitle("Låseskærm")
         .navigationBarTitleDisplayMode(.inline)
