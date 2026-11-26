@@ -19,8 +19,9 @@ Insta Prediction: native iOS-app (Swift/SwiftUI, XcodeGen, ingen .xcodeproj i gi
 - **Apples skrifter må ikke i repoet eller IPA'en** (repo og releases er offentlige). `ClockFonts.findOnDevice()` finder dem i iOS på telefonen (FontServices.framework m.fl.) ved første start og kopierer dem til Application Support/Fonts. Reserve: zip eller .otf fra Filer (`App/ZipReader.swift` pakker ud), filer lagt i Bio-mappen i Filer (Documents, `UIFileSharingEnabled`) hentes ved start, eller direkte link.
 
 ## UI
-- Hovedskærm `Views/HomeView.swift`: kun status-chips, bio-kort med felter, Afslør/Nulstil og Låseskærm. Alt andet ligger i Indstillinger (`SettingsView.swift`, rækker som i iOS).
-- Liquid glass via `Views/Glass.swift` (`glassCard`, `glassCapsule`, `glassCircle`): `glassEffect` på iOS 26 (bag `#if compiler(>=6.2)`), ellers materiale.
+- Designsystem = iOS' egne komponenter, som ejerens app Mindtrace: `List`/`Form` i `.insetGrouped`, mørk, teal accent (`Theme.accent` i `Views/Theme.swift`), farvede ikon-firkanter (`SettingsIcon`), store pille-knapper (`PillButton`). Ingen egne baggrunde eller hjemmeside-agtige kort.
+- Hovedskærm `Views/HomeView.swift`: Konto, Forudsigelse (skabelon, felter, bio-preview, Afslør/Nulstil), Input (låseskærm). Alt andet i Indstillinger.
+- Skal føles som en app: `.scrollBounceBehavior(.basedOnSize)`, så hovedskærmen ikke hopper op og ned.
 - Hold hovedskærmen rolig: ingen nye sektioner dér uden ejerens ønske.
 
 ## Relæ-felter

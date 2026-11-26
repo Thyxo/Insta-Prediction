@@ -31,6 +31,7 @@ struct SettingsView: View {
                     Text("Bio \(version)")
                 }
             }
+            .scrollBounceBehavior(.basedOnSize)
             .navigationTitle("Indstillinger")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -38,6 +39,7 @@ struct SettingsView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .tint(Theme.accent)
     }
 
     private func link<D: View>(_ title: String, _ symbol: String, _ color: Color, @ViewBuilder _ dest: () -> D) -> some View {

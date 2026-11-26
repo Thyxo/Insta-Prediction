@@ -11,6 +11,7 @@ struct InstaPredictionApp: App {
             HomeView()
                 .environment(app)
                 .preferredColorScheme(.dark)
+                .tint(Theme.accent)
                 .task { await app.start() }
                 .onChange(of: phase) { _, p in app.phase(p) }
         }
