@@ -1,85 +1,138 @@
-# Insta Prediction 🔮
+# Bio – forudsigelsen står i din rigtige Instagram-bio
 
-Tilskueren tænker frit på et ord, et kort eller et tal. De finder **din rigtige Instagram-profil på deres egen telefon**, og tanken står i bioen.
+En iPhone-app (SwiftUI) til close-up mentalisme. Tilskueren tænker frit på et kort, et tal, en dato eller et ord. Du får informationen i hemmelighed, og Bio skriver den i **din rigtige Instagram-bio**. Tilskueren finder selv din profil på **sin egen telefon**, og forudsigelsen står der.
 
-Vores udgave af den slags effekt, man kender fra *Hydra Pro*, bygget efter [Thyxo/thyxo](https://github.com/Thyxo/thyxo).
+**Effekten:** *"Tænk på et kort. Lås min telefon op med det som kode."* Koden ryster som forkert. *"Ikke min kode. Men tjek lige min Instagram."* I bioen står `🃏 Dit kort er hjerter konge`.
 
-## Hvorfor native og ikke webapp?
+- Ingen falsk app hos tilskueren. Det er din ægte profil på deres telefon.
+- Du rører ikke deres telefon.
+- Input via en falsk iOS 26-låseskærm, manuelt eller fra dine andre apps via relæet.
 
-| | Native iPhone-app (valgt) | Webapp (PWA) |
-|---|---|---|
-| Log ind på Instagram og skriv bio | ✅ Login i indbygget browser, cookies på telefonen | ❌ Browseren blokerer kald til instagram.com (CORS) |
-| Kører i baggrunden (input fra Fake Google i Safari) | ✅ Lydløs lyd holder den vågen | ❌ iOS pauser webapps |
-| Haptik + notifikation på uret | ✅ | ⚠️ Begrænset |
-| Hurtig at rette og dele | ⚠️ Build 5–8 min, SideStore | ✅ Push = live |
+🌐 **Hjemmeside:** https://thyxo.github.io/Insta-Prediction/
 
-En webapp kan **ikke** skrive i bioen uden en server, der holder din Instagram-session, og et login fra en server ligner mere misbrug for Instagram. Derfor er hjernen på telefonen. Input-apps (Fake Google, Noter+, Calc+) er stadig webapps og taler via relæet.
+---
 
-## Installér
-1. Tilføj SideStore-source: `https://raw.githubusercontent.com/Thyxo/Insta-Prediction/main/sidestore/apps.json`
-2. Installér **Bio**.
-3. Åbn ⚙︎ → **Log ind på Instagram**. Log ind som normalt (inkl. 2FA). Din nuværende bio gemmes som standard-bio.
+## 1. Installér
+Bio er ikke på App Store. Den installeres med **SideStore** (eller AltStore/LiveContainer).
 
-## Første test (fase 0)
-1. **Øve-tilstand** er slået til fra start. Prøv hele rutinen uden at røre Instagram.
-2. Slå øve-tilstand fra i ⚙︎. Brug gerne en tom test-konto første gang.
-3. Skriv et ord i feltet `ord`, og tryk **Afslør i bio**. Loggen viser "bekræftet", når Instagram har den nye bio.
-4. Tjek på en anden telefon, hvor hurtigt den nye bio kan ses.
-5. Tryk **Nulstil bio**.
+1. Har du ikke SideStore: installér det fra en computer med **[iLoader](https://iloader.app)** (gratis, et almindeligt Apple-ID er nok).
+2. I SideStore → **Sources** → **+**, indsæt:
+   ```
+   https://raw.githubusercontent.com/Thyxo/Insta-Prediction/main/sidestore/apps.json
+   ```
+3. Installér **Bio**. Nye versioner kommer som opdateringer.
 
-Virker "Kun bio" ikke, prøver "Auto" selv "Profil-formular". Fejl står i ⚙︎ → Diagnose (tag et screenshot).
+Eller hent IPA'en direkte: https://github.com/Thyxo/Insta-Prediction/releases/latest
 
-## Låseskærm (input) 🔒
-En falsk iPhone-låseskærm (iOS 26, dansk) inde i Bio, inspireret af [ClockPlus](https://github.com/Thyxo/ClockPlus). Bio står fremme, så bioen skrives med det samme.
+Første gang: slå **Indstillinger → Anonymitet & sikkerhed → Udviklertilstand** til. Med et gratis Apple-ID skal apps fornyes hver 7. dag (SideStore kan gøre det selv).
 
-**Start:** Bio → **Låseskærm** (øverst). **Tilbage:** 5 hurtige tryk øverst til højre.
+## 2. Første opsætning (5 minutter)
+1. **Log ind:** åbn Bio → tryk **Log ind** (chippen øverst) → log ind på Instagram som normalt, også med to-trins-kode. Din kode bliver på telefonen. Din nuværende bio gemmes som *standard-bio*.
+2. **Øve-tilstand** er slået til fra start (orange chip "Øve"). Så skrives der intet til Instagram. Prøv alt igennem først.
+3. **Urskrift** (så uret ligner din rigtige låseskærm): ⚙︎ → **Låseskærm** → **Urskrift** → **Vælg zip eller .otf fra Filer** → vælg zip-filen med iOS 26-urskrifterne. Eller læg zip-filen i **Filer → På min iPhone → Bio**, så henter Bio den selv. Tryk **Som min iPhone (målt)**.
+4. **Baggrund:** ⚙︎ → **Låseskærm** → **Vælg baggrund** → samme billede som din rigtige låseskærm.
+5. **Klar til show:** tryk på den orange **Øve**-chip for at slå øve-tilstand fra.
 
+## 3. Rutine: kort som pinkode
+**Opsætning:** ⚙︎ → Låseskærm → *Fortolk som:* **Kort (værdi + kulør)** → feltet `{kort}`. Skabelon **Kort**.
+
+1. Tryk **Låseskærm** i Bio. Telefonen ligner nu din låste iPhone.
+2. *"Tænk på et kort. Brug det som min pinkode: værdien, og så kuløren som et tal."*
+
+   | Kulør | Ciffer |
+   |---|---|
+   | ♣️ Klør | 1 |
+   | ♥️ Hjerter | 2 |
+   | ♠️ Spar | 3 |
+   | ♦️ Ruder | 4 |
+
+   Hjerter konge = 13 og 2 = `132`. Koden har 4 cifre, så nuller er fyld: `0132` eller `1320`.
+3. Tilskueren stryger op og taster. Koden ryster og vibrerer som **forkert kode**.
+4. Bio afslører efter 2 sek. Hængelåsen øverst åbner kort, når bioen er skiftet (kun du ved, hvad det betyder).
+5. *"Ikke min kode … men tjek lige min Instagram."* Tilskueren søger dig frem på sin egen telefon.
+6. Bagefter: 5 hurtige tryk øverst til højre → tilbage i Bio → **↺ Nulstil**.
+
+## 4. Rutine: du taster selv (usynligt tastatur)
+Du har fået informationen på anden vis (peek, force, memdeck).
+
+1. Låseskærmen står fremme. **Langt tryk på uret** (½ sek.).
+2. I 8 sek. er hele skærmen et usynligt tastatur:
+
+   | | | |
+   |:-:|:-:|:-:|
+   | 1 | 2 | 3 |
+   | 4 | 5 | 6 |
+   | 7 | 8 | 9 |
+   | ✕ slet | 0 | ✓ færdig |
+
+3. Tast fx `7` (Mnemonica: spar es) og **✓**. Bioen skiftes.
+
+## 5. Låseskærm: genveje
 | Hvad | Sådan |
 |---|---|
-| Kode-skærm | Stryg op. Tilskueren taster en kode, den ryster som "forkert kode" |
-| Usynligt tastatur | Langt tryk på uret → i 8 sek. er skærmen 1 2 3 / 4 5 6 / 7 8 9 / ✕ 0 ✓ |
-| Sort skærm | Dobbelttryk · tryk vækker |
-| Panik | Hold øverst til venstre 1 sek. (annullerer ventende afsløring) |
+| Kode-skærm | Stryg op |
+| Usynligt tastatur | Langt tryk på uret |
+| Sort skærm (telefonen "slukket") | Dobbelttryk · tryk vækker |
+| Panik (annullér afsløring) | Hold øverst til venstre i 1 sek. |
+| Tilbage til Bio | 5 hurtige tryk øverst til højre |
 
 **Fortolk cifrene som:**
-- **Tal:** 1234
-- **Kort (værdi + kulør):** sidste ciffer er kulør, 1 klør · 2 hjerter · 3 spar · 4 ruder. `132` = hjerter konge. Ved 4/6-cifret kode er nuller fyld: `0132` eller `1320`
-- **Kort (Mnemonica):** plads 1–52. `7` = spar es
-- **Dato:** `2412` = 24. december
+| Valg | Eksempel |
+|---|---|
+| Tal | `1234` → 1234 |
+| Kort (værdi + kulør) | `132` → hjerter konge |
+| Kort (Mnemonica 1–52) | `7` → spar es |
+| Dato (DDMM) | `2412` → 24. december |
 
-Cifrene skrives i det valgte felt (fx `{kort}`), og bioen afsløres efter 0–30 sek. Hængelåsen åbner kort, når input er modtaget, og igen når bioen er skiftet. Bio vibrerer ikke, mens låseskærmen vises.
+Øv dig med ⚙︎ → Låseskærm → **Vis hemmelige zoner**. Så kan du se zonerne og tastaturet.
 
-**Udseende:** vælg samme baggrund som din rigtige låseskærm, højt iOS 26-ur, 10.47 eller 10:47, operatørnavn og ægte batteriniveau. *Vis hemmelige zoner* viser zonerne og tastaturet til øvelse.
+## 6. Skabeloner
+Bioen bygges af en skabelon med felter i `{ }`. Vælg skabelon øverst på bio-kortet.
 
-### Rutine: "Din pinkode"
-1. Bio står på låseskærm, *Kort (værdi + kulør)* → `{kort}`, skabelon "Kort".
-2. "Tænk på et kort. Lås min telefon op med det som kode: værdi og kulør." Tilskueren stryger op og taster `132`. Den ryster: "forkert kode".
-3. "Ikke min kode. Men tjek lige min Instagram." Bioen siger: `🃏 Dit kort er hjerter konge`.
+| Skabelon | Bliver til |
+|---|---|
+| `🃏 Dit kort er {kort\|kort}` | 🃏 Dit kort er hjerter konge |
+| `✨ Ordet du tænker på: {ord\|titel}` | ✨ Ordet du tænker på: Bornholm |
+| `📅 Din dag er {dato}` | 📅 Din dag er 24. december |
+| `🃏 {kort\|kort} · 🔢 {tal}` | 🃏 hjerter konge · 🔢 42 |
 
-Eller hemmeligt: et langt tryk på uret, og du taster selv kortet, mens du holder telefonen.
+**Filtre:** `|titel` (Stort forbogstav), `|stor`, `|lille`, `|kort` (kh → hjerter konge), `|kortikon` (kh → K♥️), `|tal` (kun cifre).
+Maks 150 tegn, tælleren står på kortet. Gør bioen naturlig: den skal ligne noget, du selv kunne have skrevet.
 
-## Rutine (eksempel)
-1. Fake Google på din telefon, samme rum-kode som i Bio. Bio kører i baggrunden.
-2. Tilskueren søger på en by, fx "Bornholm".
-3. Bio får ordet (du mærker en notifikation / ser den på uret) og afslører selv, hvis *Afslør selv* er slået til.
-4. "Find mig på Instagram." Bioen siger: `✨ Ordet du tænker på: Bornholm`.
-5. Bagefter nulstilles bioen automatisk efter det valgte antal minutter, eller med **Nulstil bio**.
+## 7. Indstillinger (⚙︎)
+1. **Øve-tilstand:** skriver ikke til Instagram.
+2. **Instagram:** konto, test forbindelse, standard-bio (den Nulstil sætter tilbage).
+3. **Skabeloner:** lav og ret dine bio-tekster.
+4. **Låseskærm:** input, afsløring, urskrift, baggrund, øvelse.
+5. **Afsløring:** nulstil automatisk efter 1–30 min, notifikationer.
+6. **Relæ:** rum-kode til input fra Fake Google, Noter+ og Calc+.
+7. **Log:** hvad der er sket, og den seneste fejl.
 
-## Skabeloner
-- Felter: `{ord}`, `{kort}`, `{tal}`, `{navn}` eller hvad du vil.
-- Filtre: `{ord|titel}`, `{ord|stor}`, `{kort|kort}` (kh → hjerter konge), `{kort|kortikon}` (kh → K♥️), `{tal|tal}`.
-- Flere felter i én bio: `🃏 {kort|kort} · 🔢 {tal}`.
-- Maks 150 tegn. Tælleren viser det.
+## 8. Tjek før show
+- [ ] Øve-chippen er væk (øve-tilstand fra).
+- [ ] Chippen viser `@ditnavn` med grøn prik. Ellers: ⚙︎ → Instagram → Test forbindelse.
+- [ ] Standard-bio ser naturlig ud.
+- [ ] Låseskærm: rigtig baggrund og urskrift (grønt flueben under Urskrift).
+- [ ] Forstyr ikke til, så ingen notifikationer dukker op midt i effekten.
+- [ ] Out: virker Instagram ikke, så afslør med "Jeg skrev det ned før" (Noter+).
 
-## Relæ
-Samme relæ og rum-kode som Noter+, Calc+ og Fake Google. Hvert felt har en kilde (sti i rummet), fx `ord ← google.q`. Andre apps kan også sende `{"insta":{"cmd":"reveal","at":<ms>}}` eller `"reset"`.
+## 9. Godt at vide
+- **Instagram har ingen officiel måde at ændre bio på.** Bio bruger de samme kald som instagram.com. Det er imod Instagrams vilkår, og i værste fald kan kontoen blive låst. Bio venter mindst 15 sek. mellem to ændringer.
+- Tilskuerens Instagram kan vise en gammel udgave af din profil. Bed dem **søge** dig frem frem for at trykke på et gammelt link.
+- Bioen kan højst være 150 tegn.
+- Urskrifterne er Apples og må ikke deles. Derfor ligger de ikke i appen, men hentes på din telefon.
 
-## Risiko
-Instagram har ingen officiel måde at ændre bio på. Appen bruger de samme kald som instagram.com. Det er imod Instagrams vilkår, og kontoen kan i værste fald blive låst. Hold antallet af ændringer nede (appen venter mindst 15 sek. mellem to).
-
-## Tjek før show
-- Øve-tilstand **fra**, logget ind (⚙︎ → Test forbindelse).
-- Standard-bio ser naturlig ud.
-- Relæ: grøn prik. Hold kørende i baggrunden: til.
-- Fokus/Forstyr ikke: notifikationer fra Bio må gerne komme igennem (de er din peek).
-- Out: virker Instagram ikke, afslør i Noter+.
+## 10. Projekt
+```
+ios/project.yml                 XcodeGen
+ios/InstaPrediction/
+  Model/                        Ren logik (testet): skabeloner, kort, låseskærm-input, relæ
+  App/                          AppState, Instagram, relæ, skrifter, zip, baggrund
+  Views/                        HomeView, LockScreen, PasscodeView, ClockView, indstillinger
+ios/Tests/main.swift            Hurtige tests (kører før hvert build)
+site/                           Hjemmesiden (GitHub Pages)
+sidestore/apps.json             SideStore-source (opdateres af CI)
+.github/workflows/ios.yml       Test → build → release → SideStore
+.github/workflows/pages.yml     Udgiver site/ til GitHub Pages
+```
+Push til `main` = nyt build og ny version i SideStore.
