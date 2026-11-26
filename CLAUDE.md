@@ -2,11 +2,19 @@
 
 Insta Prediction: native iOS-app (Swift/SwiftUI, XcodeGen, ingen .xcodeproj i git). Den skriver en forudsigelse i performerens **rigtige** Instagram-bio. Dansk UI, visningsnavn "Bio". Se README.md (performer) og PLAN.md (faser). Reference: https://github.com/Thyxo/thyxo.
 
+- **Arbejd og push altid direkte på `main`** (ejerens ønske). Push til `main` = udgivelse.
 - Bygges i GitHub Actions (`.github/workflows/ios.yml`) uden signering → GitHub Release + `sidestore/apps.json` opdateres automatisk. Hæv `MARKETING_VERSION` i `ios/project.yml` ved større ændringer. CI committer `apps.json`, så kør `git pull` før push.
 - `ios/InstaPrediction/Model/` er ren Swift (kun Foundation) og testes med `ios/Tests/main.swift` (kører i CI før buildet):
   `swiftc -swift-version 5 ios/InstaPrediction/Model/*.swift ios/Tests/main.swift -o /tmp/t && /tmp/t`
 - `App/Instagram.swift`: login-session fra WKWebView (`WKWebsiteDataStore.default()`), kald med URLSession og samme user agent.
 - `App/Relay.swift` er kopieret fra Mosaik (samme relæ som Noter+/Calc+: `https://relay-production-03f5.up.railway.app`, Railway-projekt magic-relay).
+
+## Låseskærm (input)
+- `Views/LockScreen.swift` + `PasscodeView.swift`: falsk iOS 26-låseskærm, inspireret af Thyxo/ClockPlus (samme genveje: stryg op = kode-skærm, langt tryk på uret = usynligt 3×4-tastatur, dobbelttryk = sort, 5 tryk øverst til højre = ud, hold øverst til venstre = panik).
+- Cifre → `AppState.lockCaptured` → `LockInput.interpret` (tal | kort CHaSeD | Mnemonica | dato) → feltet `lockField` → evt. afsløring efter `lockDelay`.
+- Ingen haptik fra Bio, mens låseskærmen vises (kun kode-skærmens "forkert kode"-vibration, som en rigtig iPhone).
+- Statuslinjen er tegnet (operatør + ægte batteriniveau); iOS' egen er skjult.
+- Baggrund gemmes i Application Support (`Wallpaper`).
 
 ## Relæ-felter
 - Læser (standard): `google.q` (Fake Google), `force.name` / `force.digits` (Noter+), `result.value` (Calc+), `card.name`. Kan ændres pr. felt i indstillinger.

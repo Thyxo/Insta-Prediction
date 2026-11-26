@@ -60,9 +60,24 @@ check(gate.wait(now: 200) == 0, "efter afstanden")
 
 // 5. Standardindstillinger
 let s = Settings()
-check(s.allFields == ["ord", "kort", "tal", "navn"], "felter i standardskabeloner: \(s.allFields)")
+check(s.allFields == ["ord", "kort", "tal", "dato", "navn"], "felter i standardskabeloner: \(s.allFields)")
 check(s.practice, "starter i øve-tilstand")
 for f in s.allFields { check(s.sources[f] != nil, "kilde for \(f)") }
+
+// 6. Låseskærm-input
+check(LockInput.mnemonica.count == 52 && Set(LockInput.mnemonica.compactMap { Card.parse($0)?.name }).count == 52, "Mnemonica: 52 forskellige kort")
+let lockCases: [(String, String, String?)] = [
+    ("0042", "tal", "0042"), ("", "tal", nil),
+    ("132", "kort", "hjerter konge"), ("11", "kort", "klør es"), ("104", "kort", "ruder 10"),
+    ("143", "kort", nil), ("15", "kort", nil), ("1", "kort", nil),
+    ("7", "mnemonica", "spar es"), ("1", "mnemonica", "klør 4"), ("52", "mnemonica", "ruder 9"), ("53", "mnemonica", nil),
+    ("2412", "dato", "24. december"), ("702", "dato", "7. februar"), ("7", "dato", "7."),
+    ("3102", "dato", nil), ("2913", "dato", nil), ("32", "dato", nil),
+]
+for (inp, mode, want) in lockCases {
+    check(LockInput.interpret(inp, mode: mode) == want, "lås \(mode) \"\(inp)\" → \(LockInput.interpret(inp, mode: mode) ?? "nil")")
+}
+check(Settings().lockCodeLength == 6, "kode: 6 cifre som standard")
 
 print(failures == 0 ? "ALLE TESTS OK" : "\(failures) FEJL")
 exit(failures == 0 ? 0 : 1)

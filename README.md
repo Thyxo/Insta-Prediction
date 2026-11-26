@@ -29,6 +29,35 @@ En webapp kan **ikke** skrive i bioen uden en server, der holder din Instagram-s
 
 Virker "Kun bio" ikke, prøver "Auto" selv "Profil-formular". Fejl står i ⚙︎ → Diagnose (tag et screenshot).
 
+## Låseskærm (input) 🔒
+En falsk iPhone-låseskærm (iOS 26, dansk) inde i Bio, inspireret af [ClockPlus](https://github.com/Thyxo/ClockPlus). Bio står fremme, så bioen skrives med det samme.
+
+**Start:** Bio → **Låseskærm** (øverst). **Tilbage:** 5 hurtige tryk øverst til højre.
+
+| Hvad | Sådan |
+|---|---|
+| Kode-skærm | Stryg op. Tilskueren taster en kode, den ryster som "forkert kode" |
+| Usynligt tastatur | Langt tryk på uret → i 8 sek. er skærmen 1 2 3 / 4 5 6 / 7 8 9 / ✕ 0 ✓ |
+| Sort skærm | Dobbelttryk · tryk vækker |
+| Panik | Hold øverst til venstre 1 sek. (annullerer ventende afsløring) |
+
+**Fortolk cifrene som:**
+- **Tal:** 1234
+- **Kort (værdi + kulør):** sidste ciffer er kulør, 1 klør · 2 hjerter · 3 spar · 4 ruder. `132` = hjerter konge
+- **Kort (Mnemonica):** plads 1–52. `7` = spar es
+- **Dato:** `2412` = 24. december
+
+Cifrene skrives i det valgte felt (fx `{kort}`), og bioen afsløres efter 0–30 sek. Hængelåsen åbner kort, når input er modtaget, og igen når bioen er skiftet. Bio vibrerer ikke, mens låseskærmen vises.
+
+**Udseende:** vælg samme baggrund som din rigtige låseskærm, højt iOS 26-ur, 10.47 eller 10:47, operatørnavn og ægte batteriniveau. *Vis hemmelige zoner* viser zonerne og tastaturet til øvelse.
+
+### Rutine: "Din pinkode"
+1. Bio står på låseskærm, *Kort (værdi + kulør)* → `{kort}`, skabelon "Kort".
+2. "Tænk på et kort. Lås min telefon op med det som kode: værdi og kulør." Tilskueren stryger op og taster `132`. Den ryster: "forkert kode".
+3. "Ikke min kode. Men tjek lige min Instagram." Bioen siger: `🃏 Dit kort er hjerter konge`.
+
+Eller hemmeligt: et langt tryk på uret, og du taster selv kortet, mens du holder telefonen.
+
 ## Rutine (eksempel)
 1. Fake Google på din telefon, samme rum-kode som i Bio. Bio kører i baggrunden.
 2. Tilskueren søger på en by, fx "Bornholm".

@@ -34,6 +34,33 @@ struct LiveView: View {
                 }
 
                 Section {
+                    Button {
+                        app.lockOpen = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "lock.iphone")
+                                .font(.title2)
+                                .foregroundStyle(.white)
+                                .frame(width: 44, height: 44)
+                                .background(RoundedRectangle(cornerRadius: 11).fill(
+                                    LinearGradient(colors: [Color(red: 0.35, green: 0.32, blue: 0.86), Color(red: 0.76, green: 0.21, blue: 0.52)],
+                                                   startPoint: .topLeading, endPoint: .bottomTrailing)))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Låseskærm").font(.headline).foregroundStyle(.primary)
+                                Text("\(lockModeLabel) → {\(app.s.lockField)}" + (app.s.lockAutoReveal ? " · afslører selv" : ""))
+                                    .font(.footnote).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "play.fill").foregroundStyle(Color.accentColor)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    NavigationLink { LockSettings() } label: {
+                        Label("Indstil låseskærm", systemImage: "slider.horizontal.3")
+                    }
+                } header: { Text("Input") }
+
+                Section {
                     Picker("Skabelon", selection: $app.s.activeTemplate) {
                         ForEach(app.s.templates) { t in Text(t.name).tag(t.id.uuidString) }
                     }
@@ -114,6 +141,13 @@ struct LiveView: View {
         }
         .sheet(isPresented: $app.loginOpen) { LoginSheet() }
         .sheet(isPresented: $app.settingsOpen) { SettingsView() }
+        .fullScreenCover(isPresented: $app.lockOpen) {
+            LockScreen().environment(app)
+        }
+    }
+
+    private var lockModeLabel: String {
+        LockInput.modes.first { $0.id == app.s.lockMode }?.label ?? app.s.lockMode
     }
 
     private var relayText: String {

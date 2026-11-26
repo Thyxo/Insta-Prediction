@@ -10,6 +10,7 @@ struct Settings: Codable, Equatable {
         "navn": "force.name",
         "tal": "result.value",
         "kort": "card.name",
+        "dato": "",
     ]
     var useRelay = true
     var room = ""                    // samme rum-kode som i Fake Google / Noter+ / Calc+
@@ -22,6 +23,21 @@ struct Settings: Codable, Equatable {
     var method = "auto"              // auto | bio | web
     var keepAlive = true             // hold appen kørende i baggrunden (lydløs lyd)
     var notify = true                // notifikation ved input og afsløring (ses også på uret)
+
+    // Låseskærm (input)
+    var lockField = "tal"            // feltet cifrene skrives i
+    var lockMode = "tal"             // tal | kort | mnemonica | dato (LockInput.modes)
+    var lockCodeLength = 6           // 4 eller 6 cifre på kode-skærmen
+    var lockAutoReveal = true        // afslør, så snart input er modtaget
+    var lockDelay = 2.0              // sek. før afsløring (så tilskueren ikke ser noget ske)
+    var lockTimeSep = "."            // 10.47 (dansk) eller 10:47
+    var lockClockTall = true         // iOS 26's høje ur
+    var lockStatus = "lock"          // lock (operatør + batteri) | none
+    var lockCarrier = "Telia"
+    var lockDim = 0.1                // gør baggrunden mørkere (0…0.6)
+    var lockBlink = true             // hængelåsen blinker ved input/afsløring
+    var lockShowZones = false        // øvelse: vis hemmelige zoner
+    var lockSecretSec = 8.0          // usynligt tastatur er aktivt så længe efter sidste tryk
 
     init() {}
 

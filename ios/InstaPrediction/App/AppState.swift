@@ -39,12 +39,17 @@ final class AppState {
     var log: [LogLine] = []
     var loginOpen = false
     var settingsOpen = false
+    var lockOpen = false
+    /// Tælles op ved input fra låseskærmen og ved gennemført afsløring (hængelåsen blinker)
+    var lockPulse = 0
+    var wallpaper: UIImage? = Wallpaper.load()
 
     @ObservationIgnored let ig = Instagram()
     @ObservationIgnored private var relay: RelayClient?
     @ObservationIgnored private let keeper = BackgroundKeeper()
     @ObservationIgnored private var gate = RateGate(minGap: 15)
     @ObservationIgnored private var resetTask: Task<Void, Never>?
+    @ObservationIgnored private var lockRevealTask: Task<Void, Never>?
     @ObservationIgnored private var started = false
     /// Relæ-værdier ældre end dette tidspunkt ignoreres (sættes ved nulstilling), så gårsdagens søgning ikke tæller.
     @ObservationIgnored private var armedAt: Double = {
@@ -140,6 +145,43 @@ final class AppState {
     private func arm() {
         armedAt = Self.nowMs
         UserDefaults.standard.set(armedAt, forKey: "insta.armedAt")
+    }
+
+    // MARK: Låseskærm
+
+    /// Cifre fra kode-skærmen eller det usynlige tastatur
+    func lockCaptured(_ digits: String, via: String) {
+        guard let text = LockInput.interpret(digits, mode: s.lockMode) else {
+            add(.warn, "Låseskærm: \"\(digits)\" passer ikke som \(s.lockMode)")
+            return
+        }
+        values[s.lockField] = FieldValue(text: text, at: Self.nowMs, source: "låseskærm")
+        add(.info, "\(s.lockField) ← \(text) (\(via): \(digits))")
+        lockPulse += 1
+        guard s.lockAutoReveal else { return }
+        lockRevealTask?.cancel()
+        let delay = s.lockDelay
+        lockRevealTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            guard let self, !Task.isCancelled else { return }
+            if self.rendered.missing.isEmpty {
+                await self.reveal()
+            } else {
+                self.add(.warn, "Venter på: \(self.rendered.missing.joined(separator: ", "))")
+            }
+        }
+    }
+
+    /// Panik på låseskærmen: drop ventende afsløring og låseskærmens værdi
+    func lockPanic() {
+        lockRevealTask?.cancel()
+        if values[s.lockField]?.source == "låseskærm" { values[s.lockField] = nil }
+        add(.info, "Panik: ventende afsløring annulleret")
+    }
+
+    func setWallpaper(_ data: Data?) {
+        Wallpaper.save(data)
+        wallpaper = Wallpaper.load()
     }
 
     // MARK: Relæ
@@ -244,6 +286,7 @@ final class AppState {
         gate.mark(now: Date().timeIntervalSince1970)
 
         if s.practice {
+            lockPulse += 1
             add(.ok, "ØVE · \(label): \(text)")
             haptic(.success)
             if s.notify { Notifier.post("Øve: \(label)", text) }
@@ -259,6 +302,7 @@ final class AppState {
                 currentBio = p.biography
                 confirmed = p.biography.trimmingCharacters(in: .whitespacesAndNewlines) == text.trimmingCharacters(in: .whitespacesAndNewlines)
             }
+            lockPulse += 1
             add(confirmed ? .ok : .warn, "\(label) (\(method)): " + (confirmed ? "bekræftet" : "sendt, men ikke bekræftet"))
             lastError = ""
             haptic(.success)
@@ -294,6 +338,31 @@ final class AppState {
     }
 
     private func haptic(_ t: UINotificationFeedbackGenerator.FeedbackType) {
+        guard !lockOpen else { return }   // tilskueren kan holde telefonen
         UINotificationFeedbackGenerator().notificationOccurred(t)
+    }
+}
+
+/// Låseskærmens baggrund (samme billede som din rigtige låseskærm), gemt i Application Support
+enum Wallpaper {
+    static var url: URL {
+        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.appendingPathComponent("wallpaper.jpg")
+    }
+
+    static func load() -> UIImage? {
+        guard let d = try? Data(contentsOf: url) else { return nil }
+        return UIImage(data: d)
+    }
+
+    static func save(_ data: Data?) {
+        guard let data, let img = UIImage(data: data) else { try? FileManager.default.removeItem(at: url); return }
+        // Gem i skærmstørrelse, så det er hurtigt at vise
+        let maxSide: CGFloat = 2800
+        let scale = min(1, maxSide / max(img.size.width, img.size.height))
+        let size = CGSize(width: img.size.width * scale, height: img.size.height * scale)
+        let out = UIGraphicsImageRenderer(size: size).image { _ in img.draw(in: CGRect(origin: .zero, size: size)) }
+        try? out.jpegData(compressionQuality: 0.9)?.write(to: url, options: .atomic)
     }
 }

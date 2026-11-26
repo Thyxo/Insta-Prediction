@@ -11,6 +11,7 @@ struct BioTemplate: Codable, Equatable, Identifiable {
         BioTemplate(name: "Ord", text: "✨ Ordet du tænker på: {ord|titel}"),
         BioTemplate(name: "Kort", text: "🃏 Dit kort er {kort|kort}"),
         BioTemplate(name: "Kort + tal", text: "🃏 {kort|kort} · 🔢 {tal}"),
+        BioTemplate(name: "Dato", text: "📅 Din dag er {dato}"),
         BioTemplate(name: "Navn", text: "Hej {navn|titel} 👋 Jeg vidste, du ville kigge her"),
     ]
 }
