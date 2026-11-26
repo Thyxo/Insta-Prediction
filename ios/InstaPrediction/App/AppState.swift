@@ -43,6 +43,9 @@ final class AppState {
     /// Tælles op ved input fra låseskærmen og ved gennemført afsløring (hængelåsen blinker)
     var lockPulse = 0
     var wallpaper: UIImage? = Wallpaper.load()
+    var fontsVersion = 0              // tælles op når urskrifter er fundet/importeret
+    var fontLog: [String] = []
+    var fontSearching = false
 
     @ObservationIgnored let ig = Instagram()
     @ObservationIgnored private var relay: RelayClient?
@@ -80,6 +83,7 @@ final class AppState {
         if s.notify { Notifier.ask() }
         connectRelay()
         updateKeepAlive()
+        if ClockFonts.list().isEmpty { Task { await findFonts(auto: true) } }
         await checkLogin()
     }
 
@@ -177,6 +181,32 @@ final class AppState {
         lockRevealTask?.cancel()
         if values[s.lockField]?.source == "låseskærm" { values[s.lockField] = nil }
         add(.info, "Panik: ventende afsløring annulleret")
+    }
+
+    /// Find låseskærmens urskrifter i iOS på telefonen og kopiér dem ind i appen
+    func findFonts(auto: Bool) async {
+        guard !fontSearching else { return }
+        fontSearching = true
+        defer { fontSearching = false }
+        let r = await Task.detached(priority: .userInitiated) { ClockFonts.findOnDevice() }.value
+        ClockFonts.didAdd()
+        fontLog = r.log
+        fontsVersion += 1
+        if r.found.isEmpty {
+            if !auto { add(.warn, "Fandt ingen urskrifter på telefonen (se Urskrift → Detaljer)") }
+        } else {
+            add(.ok, "Urskrifter fundet på telefonen: \(r.found.count)")
+        }
+    }
+
+    func downloadFont(_ link: String) async {
+        do {
+            let name = try await ClockFonts.download(link)
+            fontsVersion += 1
+            add(.ok, "Hentet skrift: \(name)")
+        } catch {
+            add(.error, "Kunne ikke hente skrift: \(error.localizedDescription)")
+        }
     }
 
     func setWallpaper(_ data: Data?) {

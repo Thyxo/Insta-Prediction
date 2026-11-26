@@ -18,7 +18,7 @@ enum ClockFonts {
 
     static func list() -> [String] {
         let files = (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []
-        return files.filter { $0.lowercased().hasSuffix(".otf") || $0.lowercased().hasSuffix(".ttf") }.sorted()
+        return files.filter { f in [".otf", ".ttf", ".ttc"].contains { f.lowercased().hasSuffix($0) } }.sorted()
     }
 
     /// Kopiér valgte filer ind (fra Filer/AirDrop). Returnerer navnene.
@@ -65,8 +65,10 @@ enum ClockFonts {
     static func postScriptName(for file: String) -> String? {
         if let n = names[file] { return n }
         let url = dir.appendingPathComponent(file)
-        guard let provider = CGDataProvider(url: url as CFURL), let cg = CGFont(provider),
-              let name = cg.postScriptName as String? else { return nil }
+        // Virker for .otf, .ttf og .ttc (første skrift i samlingen)
+        guard let descs = CTFontManagerCreateFontDescriptorsFromURL(url as CFURL) as? [CTFontDescriptor],
+              let first = descs.first,
+              let name = CTFontDescriptorCopyAttribute(first, kCTFontNameAttribute) as? String else { return nil }
         if !registered.contains(file) {
             CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
             registered.insert(file)
@@ -74,6 +76,80 @@ enum ClockFonts {
         names[file] = name
         return name
     }
+
+    // MARK: Find skrifterne på telefonen
+
+    /// Låseskærmens urskrifter (iOS 16+) ligger i systemet. Navnene fra iOS 26.3.
+    static let systemStems = [
+        "SFAdaptiveNumeric", "SFAdaptiveSoftNumeric", "SFNumeric", "SFSoftNumeric", "SFRoundedNumeric",
+        "SFStencilNumeric", "SFRailNumeric", "SFRailRoundedNumeric", "NewYorkNumeric", "NewYorkSoftNumeric",
+        "ADTSlabNumeric", "ADTSlabSoftNumeric", "SFCompactSoft",
+    ]
+
+    /// Søger i iOS' egne skrift-mapper og kopierer urskrifterne til appen (kun til eget brug på telefonen).
+    /// Kører uden for main-tråden. Returnerer kopierede filnavne og en kort log.
+    static func findOnDevice() -> (found: [String], log: [String]) {
+        let fm = FileManager.default
+        let roots = [
+            "/System/Library/PrivateFrameworks/FontServices.framework",
+            "/System/Library/Fonts",
+            "/System/Library/PrivateFrameworks/SpringBoardFoundation.framework",
+            "/System/Library/PrivateFrameworks/PosterBoardServices.framework",
+            "/System/Library/PrivateFrameworks",
+        ]
+        let dest = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Fonts", isDirectory: true)
+        try? fm.createDirectory(at: dest, withIntermediateDirectories: true)
+        var found: [String] = []
+        var log: [String] = []
+        var seen = Set<String>()
+        for root in roots {
+            guard fm.fileExists(atPath: root) else { log.append("\(root): findes ikke/ingen adgang"); continue }
+            guard let en = fm.enumerator(at: URL(fileURLWithPath: root), includingPropertiesForKeys: nil,
+                                         options: [.skipsHiddenFiles]) else { log.append("\(root): kan ikke læses"); continue }
+            var scanned = 0
+            for case let u as URL in en {
+                scanned += 1
+                if scanned > 400_000 { break }
+                let name = u.lastPathComponent
+                let ext = u.pathExtension.lowercased()
+                guard ["otf", "ttf", "ttc"].contains(ext),
+                      systemStems.contains(where: { name.hasPrefix($0) }), !seen.contains(name) else { continue }
+                seen.insert(name)
+                let to = dest.appendingPathComponent(name)
+                try? fm.removeItem(at: to)
+                if (try? fm.copyItem(at: u, to: to)) != nil {
+                    found.append(name)
+                    log.append("Fundet: \(u.path)")
+                }
+            }
+            log.append("\(root): \(scanned) filer gennemset")
+            // Har vi den vigtigste, behøver vi ikke gennemsøge alle private frameworks
+            if found.contains(where: { $0.hasPrefix("SFAdaptiveNumeric") }) { break }
+        }
+        return (found, log)
+    }
+
+    /// Hent en skriftfil fra et link (fx dit eget iCloud/Drive-link til en .otf)
+    static func download(_ link: String) async throws -> String {
+        guard let url = URL(string: link.trimmingCharacters(in: .whitespacesAndNewlines)) else { throw URLError(.badURL) }
+        let (tmp, resp) = try await URLSession.shared.download(from: url)
+        guard (resp as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? true else { throw URLError(.badServerResponse) }
+        var name = resp.suggestedFilename ?? url.lastPathComponent
+        if !["otf", "ttf", "ttc"].contains((name as NSString).pathExtension.lowercased()) { name += ".otf" }
+        let dest = dir.appendingPathComponent(name)
+        try? FileManager.default.removeItem(at: dest)
+        try FileManager.default.moveItem(at: tmp, to: dest)
+        cache.removeAll()
+        names[name] = nil
+        guard postScriptName(for: name) != nil else {
+            try? FileManager.default.removeItem(at: dest)
+            throw NSError(domain: "Bio", code: 1, userInfo: [NSLocalizedDescriptionKey: "Filen er ikke en skrift (.otf/.ttf). Er linket et direkte download-link?"])
+        }
+        return name
+    }
+
+    static func didAdd() { cache.removeAll(); names.removeAll() }
 
     static func axes(for file: String) -> Set<String> {
         guard let name = postScriptName(for: file) else { return [] }

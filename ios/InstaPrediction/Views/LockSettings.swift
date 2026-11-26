@@ -8,6 +8,7 @@ struct LockSettings: View {
     @State private var pick: PhotosPickerItem?
     @State private var importing = false
     @State private var fonts = ClockFonts.list()
+    @State private var fontLink = ""
 
     var body: some View {
         @Bindable var app = app
@@ -83,7 +84,7 @@ struct LockSettings: View {
 
             Section {
                 if fonts.isEmpty {
-                    Text("Ingen skrift importeret. Uret bruger en strakt systemskrift.")
+                    Text("Ingen urskrift endnu. Uret bruger en strakt systemskrift.")
                         .foregroundStyle(.secondary)
                 } else {
                     Picker("Skrift", selection: $app.s.lockFont) {
@@ -92,9 +93,33 @@ struct LockSettings: View {
                     }
                 }
                 Button {
+                    Task { await app.findFonts(auto: false) }
+                } label: {
+                    HStack {
+                        Label("Find skrifterne på telefonen", systemImage: "magnifyingglass")
+                        if app.fontSearching { Spacer(); ProgressView() }
+                    }
+                }
+                .disabled(app.fontSearching)
+                Button {
                     importing = true
                 } label: {
-                    Label("Importér skriftfiler (.otf) …", systemImage: "textformat")
+                    Label("Importér skriftfiler (.otf) …", systemImage: "square.and.arrow.down")
+                }
+                HStack {
+                    TextField("…eller link til en .otf", text: $fontLink)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                        .keyboardType(.URL)
+                    Button("Hent") {
+                        let l = fontLink
+                        Task { await app.downloadFont(l); fontLink = "" }
+                    }
+                    .disabled(fontLink.isEmpty)
+                }
+                if !app.fontLog.isEmpty {
+                    DisclosureGroup("Detaljer") {
+                        ForEach(app.fontLog, id: \.self) { Text($0).font(.caption2).foregroundStyle(.secondary) }
+                    }
                 }
                 if !fonts.isEmpty {
                     Button("Slet importerede skrifter", role: .destructive) {
@@ -120,7 +145,7 @@ struct LockSettings: View {
                     app.s.lockPadlock = false
                 }
             } header: { Text("Urskrift") } footer: {
-                Text("Brug Apples egne urskrifter fra iOS 26.3: send SFAdaptiveNumeric-VF.otf (og gerne flere) til telefonen via AirDrop eller Filer, og importér dem her. De gemmes kun på telefonen. Målt på din låseskærm: tykkelse 600, højde 28,4 %.")
+                Text("Låseskærmens egne urskrifter ligger i iOS. Bio leder selv efter dem ved første start og kopierer dem ind (kun på telefonen). Virker det ikke, så importér SFAdaptiveNumeric-VF.otf fra Filer eller indsæt et direkte link. Målt på din låseskærm: tykkelse 600, højde 28,4 %.")
             }
 
             Section {
@@ -148,13 +173,14 @@ struct LockSettings: View {
             }
         }
         .fileImporter(isPresented: $importing,
-                      allowedContentTypes: [UTType(filenameExtension: "otf") ?? .font, UTType(filenameExtension: "ttf") ?? .font, .font],
+                      allowedContentTypes: [UTType(filenameExtension: "otf") ?? .font, UTType(filenameExtension: "ttf") ?? .font, .font, .data],
                       allowsMultipleSelection: true) { result in
             guard case .success(let urls) = result else { return }
             let got = ClockFonts.importFiles(urls)
             fonts = ClockFonts.list()
             app.add(got.isEmpty ? .warn : .ok, got.isEmpty ? "Ingen skrift kunne læses" : "Importeret: \(got.joined(separator: ", "))")
         }
+        .onChange(of: app.fontsVersion) { _, _ in fonts = ClockFonts.list() }
         .navigationTitle("Låseskærm")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: pick) { _, item in
