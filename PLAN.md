@@ -49,15 +49,21 @@ Vi har det meste allerede. Hver app skriver bare et nyt felt i relæ-rummet:
 ### Output: Instagram-bio
 **Vigtigt:** Metas officielle API (Graph API) kan **ikke** skrive i bioen. Hydra må bruge Instagrams uofficielle app-/web-API med en logget-ind session. Det gør vi også:
 
-- Login én gang på serveren (brugernavn + kode + 2FA-kode) → gem session-cookie.
-- Bio-opdatering = samme kald som når du redigerer profil i Instagram-webappen.
-- Lib-valg: Node `instagram-private-api` eller et rent `fetch`-kald mod web-endpointet. Prototype afgør hvilket der er mest stabilt.
+**"Connect konto" (OAuth) virker ikke til bio.** Instagram API with Instagram Login (Business/Creator) kan læse `biography`, men opdatering er "not supported". Den kan kun lave opslag, stories, kommentarer og DM'er, og alt det får et "lige nu"-tidsstempel, der afslører effekten.
+
+**Valgt løsning: login inde i vores egen iPhone-app (som Hydra):**
+- Native SwiftUI-app (SideStore) med en indbygget `WKWebView`, hvor du logger ind på instagram.com som normalt (inkl. 2FA).
+- Appen gemmer session-cookien i Keychain. Koden ser vi aldrig.
+- Bio-opdatering = samme kald som "Rediger profil" på instagram.com, sendt **fra din egen telefon** (din IP, din enhed). Det giver langt færre sikkerhedstjek end et login fra en Railway-server.
+- En webapp (PWA) kan ikke gøre det: browseren blokerer kald til instagram.com fra et andet domæne (CORS), og vi kan ikke læse cookien.
+- Railway-relæet bruges stadig til input fra de andre apps. Selve skrivningen til Instagram sker fra telefonen.
+- Reserve: samme kald fra en server (Node) med session-cookie, hvis telefonen ikke kan.
 
 Risici, og hvad vi gør:
 | Risiko | Modtræk |
 |---|---|
-| Brud på Instagrams vilkår → konto kan låses | Brug en **dedikeret performer-konto**, ikke familiens private |
-| "Mistænkelig aktivitet"-tjek ved login fra Railway | Login fra samme IP fast; genbrug session; ingen gentagne logins |
+| Brud på Instagrams vilkår → konto kan låses | Test først på en **tom test-konto**, derefter @danieltryller (show-kontoen) |
+| "Mistænkelig aktivitet"-tjek | Kaldet kommer fra din egen telefon; genbrug session; ingen gentagne logins |
 | Rate-limit ved mange ændringer | Maks ca. 1 ændring pr. minut, kø + "for hurtigt"-advarsel |
 | Tilskuerens app viser gammel bio (cache) | Opdater **før** de søger; bed dem søge frem for at trykke på et gammelt link |
 | Instagram ændrer API | Output er et plugin; fallback til Noter+/Mosaik i samme rum |
@@ -83,8 +89,8 @@ Regler fra `magi.md`: dansk UI, panik = hold 1 sek. → neutral, tilstand går a
 
 | Fase | Indhold | Resultat |
 |---|---|---|
-| **0. Spike** (½ dag) | Node-script: login + skift bio på test-konto. Mål tid fra kald → synlig i app | Ved vi om det holder |
-| **1. MVP** | `insta-service` på Railway + Kontrol-PWA med manuelt input og én skabelon | Første rigtige show-test |
+| **0. Spike** (½ dag) | Mini-iPhone-app: WebView-login + knap "Skift bio" på test-konto. Mål tid fra kald → synlig hos tilskuer | Ved vi om det holder |
+| **1. MVP** | iPhone-appen får skabelon, manuel peek/input, "Afslør" og "Nulstil" | Første rigtige show-test |
 | **2. Input** | Koble Fake Google, Noter+, Calc+, Clock+ på via relæ-felter | "Capture methods" |
 | **3. Skabeloner** | Flere felter, flere afsløringer, auto-afslør, cloud-backup | Hydra Pro-niveau |
 | **4. Ekstra** | Webhook-output, Noter+/Mosaik-output, temaer | Feature-paritet |
@@ -109,7 +115,6 @@ README.md       til performeren: opsætning, rutine, nulstilling
 - Out: virker Instagram ikke, afslør i Noter+ eller med klassisk "skrevet i forvejen".
 
 ## 7. Åbne spørgsmål
-1. Har du en separat performer-konto på Instagram, eller skal vi oprette én?
-2. Skal hjernen ligge i den eksisterende `relay`-service eller som ny service i `magic-relay`?
+1. ~~Konto~~ → @danieltryller (efter test på en tom konto).
+2. ~~Webapp eller native~~ → native iPhone-app (krævet af login-metoden).
 3. Hvilket input er vigtigst først: Fake Google, Noter+ eller manuel peek?
-4. Webapp først (hurtig) eller direkte native iPhone-app?
