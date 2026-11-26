@@ -43,7 +43,7 @@ En falsk iPhone-låseskærm (iOS 26, dansk) inde i Bio, inspireret af [ClockPlus
 
 **Fortolk cifrene som:**
 - **Tal:** 1234
-- **Kort (værdi + kulør):** sidste ciffer er kulør, 1 klør · 2 hjerter · 3 spar · 4 ruder. `132` = hjerter konge
+- **Kort (værdi + kulør):** sidste ciffer er kulør, 1 klør · 2 hjerter · 3 spar · 4 ruder. `132` = hjerter konge. Ved 4/6-cifret kode er nuller fyld: `0132` eller `1320`
 - **Kort (Mnemonica):** plads 1–52. `7` = spar es
 - **Dato:** `2412` = 24. december
 

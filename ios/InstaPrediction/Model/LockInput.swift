@@ -5,8 +5,8 @@ enum LockInput {
     /// Fortolkninger af cifrene
     static let modes: [(id: String, label: String, help: String)] = [
         ("tal", "Tal", "Cifrene som de er: 1234"),
-        ("kort", "Kort (værdi + kulør)", "Sidste ciffer er kulør (1 klør, 2 hjerter, 3 spar, 4 ruder). 132 = hjerter konge"),
-        ("mnemonica", "Kort (Mnemonica 1–52)", "Plads i Tamariz' stak: 7 = spar es"),
+        ("kort", "Kort (værdi + kulør)", "Sidste ciffer er kulør (1 klør, 2 hjerter, 3 spar, 4 ruder). 132 = hjerter konge. Nuller er fyld: 0132 eller 1320."),
+        ("mnemonica", "Kort (Mnemonica 1–52)", "Plads i Tamariz' stak: 7 = spar es. Nuller foran er fyld: 0007."),
         ("dato", "Dato (DDMM)", "2412 = 24. december, 7 = 7."),
     ]
 
@@ -28,13 +28,20 @@ enum LockInput {
     static func interpret(_ raw: String, mode: String) -> String? {
         let d = raw.filter(\.isNumber)
         guard !d.isEmpty else { return nil }
+        // Kode-skærmen kræver 4/6 cifre: nuller foran/bagved er fyld (0132, 1320, 000007)
+        let trimmed = String(d.drop { $0 == "0" }.reversed().drop { $0 == "0" }.reversed())
+        let lead = String(d.drop { $0 == "0" })
         switch mode {
         case "kort":
+            let d = trimmed
             guard d.count >= 2, d.count <= 3, let suit = suitCode[d.last!],
                   let rank = Int(d.dropLast()), (1...13).contains(rank) else { return nil }
             return Card(rank: rank, suit: suit).name
         case "mnemonica":
-            guard let n = Int(d), (1...52).contains(n) else { return nil }
+            guard let n = Int(lead) ?? Int(trimmed), (1...52).contains(n) else {
+                if let n = Int(trimmed), (1...52).contains(n) { return Card.parse(mnemonica[n - 1])?.name }
+                return nil
+            }
             return Card.parse(mnemonica[n - 1])?.name
         case "dato":
             if d.count <= 2 {

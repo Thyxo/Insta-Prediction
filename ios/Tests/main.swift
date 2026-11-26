@@ -71,6 +71,8 @@ let lockCases: [(String, String, String?)] = [
     ("132", "kort", "hjerter konge"), ("11", "kort", "klør es"), ("104", "kort", "ruder 10"),
     ("143", "kort", nil), ("15", "kort", nil), ("1", "kort", nil),
     ("7", "mnemonica", "spar es"), ("1", "mnemonica", "klør 4"), ("52", "mnemonica", "ruder 9"), ("53", "mnemonica", nil),
+    ("0132", "kort", "hjerter konge"), ("1320", "kort", "hjerter konge"), ("001020", "kort", "hjerter 10"),
+    ("000007", "mnemonica", "spar es"), ("0052", "mnemonica", "ruder 9"), ("5200", "mnemonica", "ruder 9"),
     ("2412", "dato", "24. december"), ("702", "dato", "7. februar"), ("7", "dato", "7."),
     ("3102", "dato", nil), ("2913", "dato", nil), ("32", "dato", nil),
 ]

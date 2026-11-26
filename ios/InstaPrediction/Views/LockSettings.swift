@@ -107,6 +107,9 @@ struct LockSettings: View {
             // Kort-tilstande skriver naturligt i {kort}
             if (m == "kort" || m == "mnemonica") && app.s.allFields.contains("kort") { app.s.lockField = "kort" }
             if m == "tal" && app.s.allFields.contains("tal") { app.s.lockField = "tal" }
+            if m == "dato" && app.s.allFields.contains("dato") { app.s.lockField = "dato" }
+            // Kort og datoer passer bedst i en 4-cifret kode
+            if m != "tal" { app.s.lockCodeLength = 4 }
         }
     }
 
