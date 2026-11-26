@@ -40,6 +40,7 @@ final class AppState {
     var loginOpen = false
     var settingsOpen = false
     var lockOpen = false
+    var notesOpen = false
     /// Tælles op ved input fra låseskærmen og ved gennemført afsløring (hængelåsen blinker)
     var lockPulse = 0
     var wallpaper: UIImage? = Wallpaper.load()
@@ -167,6 +168,31 @@ final class AppState {
         guard s.lockAutoReveal else { return }
         lockRevealTask?.cancel()
         let delay = s.lockDelay
+        lockRevealTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            guard let self, !Task.isCancelled else { return }
+            if self.rendered.missing.isEmpty {
+                await self.reveal()
+            } else {
+                self.add(.warn, "Venter på: \(self.rendered.missing.joined(separator: ", "))")
+            }
+        }
+    }
+
+    /// Noter: tilskueren har trykket Færdig. Gentaget tekst ignoreres.
+    func noteCaptured(_ note: String) {
+        guard let text = NoteInput.extract(note, mode: s.noteMode) else {
+            if !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                add(.warn, "Noter: intet brugbart som \(s.noteMode)")
+            }
+            return
+        }
+        if values[s.noteField]?.text == text, values[s.noteField]?.source == "noter" { return }
+        values[s.noteField] = FieldValue(text: text, at: Self.nowMs, source: "noter")
+        add(.info, "\(s.noteField) ← \(text) (noter)")
+        guard s.noteAutoReveal else { return }
+        lockRevealTask?.cancel()
+        let delay = s.noteDelay
         lockRevealTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             guard let self, !Task.isCancelled else { return }
@@ -385,7 +411,7 @@ final class AppState {
     }
 
     private func haptic(_ t: UINotificationFeedbackGenerator.FeedbackType) {
-        guard !lockOpen else { return }   // tilskueren kan holde telefonen
+        guard !lockOpen, !notesOpen else { return }   // tilskueren kan holde telefonen
         UINotificationFeedbackGenerator().notificationOccurred(t)
     }
 }

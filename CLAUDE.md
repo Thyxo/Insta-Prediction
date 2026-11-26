@@ -18,6 +18,9 @@ Insta Prediction: native iOS-app (Swift/SwiftUI, XcodeGen, ingen .xcodeproj i gi
 - **Uret** (`Views/ClockView.swift`) tegnes med CoreText. Målt på ejerens iOS 26-låseskærm (1179×2556): `SFAdaptiveNumeric-VF.otf`, wght 600, wdth 100, HGHT ≈ 230; cifrene fylder 86 % af bredden og 28,4 % af højden, top = safe area + 55 pt. Dato `tors. 26. nov.` 22 pt semibold, top = safe area + 25 pt. Knapper 57 pt, centrum 75 pt fra siden og bund-inset + 45 pt.
 - **Apples skrifter må ikke i repoet eller IPA'en** (repo og releases er offentlige). `ClockFonts.findOnDevice()` finder dem i iOS på telefonen (FontServices.framework m.fl.) ved første start og kopierer dem til Application Support/Fonts. Reserve: zip eller .otf fra Filer (`App/ZipReader.swift` pakker ud), filer lagt i Bio-mappen i Filer (Documents, `UIFileSharingEnabled`) hentes ved start, eller direkte link.
 
+## Noter (input)
+- `Views/NotesView.swift`: falsk iOS 26 Noter (sort, gul, glas-knapper, første linje som overskrift, notelisten bag ‹). Ved ✓/tilbage (`textViewDidEndEditing`) → `AppState.noteCaptured` → `NoteInput.extract` (sidste | første | hele | ord | kort) → feltet `noteField` → evt. afsløring efter `noteDelay`. Ud: 5 tryk øverst til højre.
+
 ## UI
 - Designsystem = iOS' egne komponenter, som ejerens app Mindtrace: `List`/`Form` i `.insetGrouped`, mørk, teal accent (`Theme.accent` i `Views/Theme.swift`), farvede ikon-firkanter (`SettingsIcon`), store pille-knapper (`PillButton`). Ingen egne baggrunde eller hjemmeside-agtige kort.
 - Hovedskærm `Views/HomeView.swift`: Konto, Forudsigelse (skabelon, felter, bio-preview, Afslør/Nulstil), Input (låseskærm). Alt andet i Indstillinger.

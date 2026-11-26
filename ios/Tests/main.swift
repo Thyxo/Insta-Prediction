@@ -81,5 +81,17 @@ for (inp, mode, want) in lockCases {
 }
 check(Settings().lockCodeLength == 6, "kode: 6 cifre som standard")
 
+// 7. Noter-input
+let noteCases: [(String, String, String?)] = [
+    ("Bornholm", "sidste", "Bornholm"), ("Ord\n  Bornholm  \n\n", "sidste", "Bornholm"),
+    ("Ord\nBornholm", "første", "Ord"), ("Min tanke\nen rød bil", "hele", "Min tanke en rød bil"),
+    ("jeg tænker på Paris!", "ord", "Paris"), ("hjerter konge", "kort", "hjerter konge"),
+    ("Kort:\nKH", "kort", "hjerter konge"), ("blå", "kort", nil), ("  \n ", "sidste", nil), ("", "hele", nil),
+]
+for (inp, mode, want) in noteCases {
+    check(NoteInput.extract(inp, mode: mode) == want, "note \(mode) \"\(inp)\" → \(NoteInput.extract(inp, mode: mode) ?? "nil")")
+}
+check(Settings().noteField == "ord", "noter: feltet ord som standard")
+
 print(failures == 0 ? "ALLE TESTS OK" : "\(failures) FEJL")
 exit(failures == 0 ? 0 : 1)

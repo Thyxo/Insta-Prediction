@@ -67,7 +67,20 @@ Du har fået informationen på anden vis (peek, force, memdeck).
 
 3. Tast fx `7` (Mnemonica: spar es) og **✓**. Bioen skiftes.
 
-## 5. Låseskærm: genveje
+## 5. Rutine: tilskueren skriver i Noter
+**Opsætning:** ⚙︎ → **Noter** → *Tag:* **Sidste linje** → feltet `{ord}`. Skabelon **Ord**.
+
+1. Tryk **Noter** i Bio. Telefonen ligner nu din Noter-app.
+2. *"Skriv et ord, du tænker på, i min note. Tryk på ✓, når du er færdig."*
+3. Tilskueren skriver og trykker ✓ (eller tilbage). Bio tager teksten og skifter bioen efter 2 sek.
+4. Slå **Tøm noten bagefter** til, hvis teksten skal forsvinde.
+5. *"Tjek lige min Instagram."*
+6. Tilbage til Bio: 5 hurtige tryk øverst til højre.
+
+**Tag:** sidste linje, første linje, hele noten, sidste ord eller et kort ("hjerter konge", "KH").
+Bruger du **Noter+**, virker det også via relæet (felt `force.name`).
+
+## 6. Låseskærm: genveje
 | Hvad | Sådan |
 |---|---|
 | Kode-skærm | Stryg op |
@@ -86,7 +99,7 @@ Du har fået informationen på anden vis (peek, force, memdeck).
 
 Øv dig med ⚙︎ → Låseskærm → **Vis hemmelige zoner**. Så kan du se zonerne og tastaturet.
 
-## 6. Skabeloner
+## 7. Skabeloner
 Bioen bygges af en skabelon med felter i `{ }`. Vælg skabelon øverst på bio-kortet.
 
 | Skabelon | Bliver til |
@@ -99,16 +112,17 @@ Bioen bygges af en skabelon med felter i `{ }`. Vælg skabelon øverst på bio-k
 **Filtre:** `|titel` (Stort forbogstav), `|stor`, `|lille`, `|kort` (kh → hjerter konge), `|kortikon` (kh → K♥️), `|tal` (kun cifre).
 Maks 150 tegn, tælleren står på kortet. Gør bioen naturlig: den skal ligne noget, du selv kunne have skrevet.
 
-## 7. Indstillinger (⚙︎)
+## 8. Indstillinger (⚙︎)
 1. **Øve-tilstand:** skriver ikke til Instagram.
 2. **Instagram:** konto, test forbindelse, standard-bio (den Nulstil sætter tilbage).
 3. **Skabeloner:** lav og ret dine bio-tekster.
 4. **Låseskærm:** input, afsløring, urskrift, baggrund, øvelse.
-5. **Afsløring:** nulstil automatisk efter 1–30 min, notifikationer.
-6. **Relæ:** rum-kode til input fra Fake Google, Noter+ og Calc+.
-7. **Log:** hvad der er sket, og den seneste fejl.
+5. **Noter:** hvad Bio tager fra noten, felt, afsløring.
+6. **Afsløring:** nulstil automatisk efter 1–30 min, notifikationer.
+7. **Relæ:** rum-kode til input fra Fake Google, Noter+ og Calc+.
+8. **Log:** hvad der er sket, og den seneste fejl.
 
-## 8. Tjek før show
+## 9. Tjek før show
 - [ ] Øve-chippen er væk (øve-tilstand fra).
 - [ ] Chippen viser `@ditnavn` med grøn prik. Ellers: ⚙︎ → Instagram → Test forbindelse.
 - [ ] Standard-bio ser naturlig ud.
@@ -116,13 +130,13 @@ Maks 150 tegn, tælleren står på kortet. Gør bioen naturlig: den skal ligne n
 - [ ] Forstyr ikke til, så ingen notifikationer dukker op midt i effekten.
 - [ ] Out: virker Instagram ikke, så afslør med "Jeg skrev det ned før" (Noter+).
 
-## 9. Godt at vide
+## 10. Godt at vide
 - **Instagram har ingen officiel måde at ændre bio på.** Bio bruger de samme kald som instagram.com. Det er imod Instagrams vilkår, og i værste fald kan kontoen blive låst. Bio venter mindst 15 sek. mellem to ændringer.
 - Tilskuerens Instagram kan vise en gammel udgave af din profil. Bed dem **søge** dig frem frem for at trykke på et gammelt link.
 - Bioen kan højst være 150 tegn.
 - Urskrifterne er Apples og må ikke deles. Derfor ligger de ikke i appen, men hentes på din telefon.
 
-## 10. Projekt
+## 11. Projekt
 ```
 ios/project.yml                 XcodeGen
 ios/InstaPrediction/

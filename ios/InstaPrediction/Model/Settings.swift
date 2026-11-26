@@ -45,6 +45,14 @@ struct Settings: Codable, Equatable {
     var lockFocus = ""               // fx "Forstyr ikke" (tom = skjult)
     var lockFooter = ""              // lille tekst i bunden, fx dit navn
 
+    // Noter (input): tilskueren skriver i en falsk Noter-app
+    var noteField = "ord"            // feltet teksten skrives i
+    var noteMode = "sidste"          // NoteInput.modes
+    var noteAutoReveal = true        // afslør, når der trykkes Færdig
+    var noteDelay = 2.0              // sek. før afsløring
+    var noteClear = false            // tøm noten efter Færdig (så den "forsvinder")
+    var noteStart = ""               // tekst noten starter med, fx "Indkøb"
+
     init() {}
 
     static let key = "insta.settings.v1"

@@ -21,6 +21,7 @@ struct SettingsView: View {
                     link("Instagram", "person.crop.circle.fill", .pink) { InstagramSettings() }
                     link("Skabeloner", "text.quote", .purple) { TemplatesView() }
                     link("Låseskærm", "lock.iphone", .indigo) { LockSettings() }
+                    link("Noter", "note.text", .yellow) { NoteSettings() }
                     link("Afsløring", "sparkles", .orange) { RevealSettings() }
                     link("Relæ", "antenna.radiowaves.left.and.right", .green) { RelaySettings() }
                 }
@@ -101,6 +102,64 @@ struct InstagramSettings: View {
         }
         .navigationTitle("Instagram")
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: Noter
+
+struct NoteSettings: View {
+    @Environment(AppState.self) private var app
+
+    var body: some View {
+        @Bindable var app = app
+        Form {
+            Section {
+                Button {
+                    app.settingsOpen = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { app.notesOpen = true }
+                } label: {
+                    Label("Åbn Noter", systemImage: "play.fill").bold()
+                }
+            } footer: {
+                Text("Tilskueren skriver i noten og trykker ✓ (Færdig) eller tilbage. Så tager Bio teksten. Tilbage til Bio: 5 hurtige tryk øverst til højre.")
+            }
+
+            Section {
+                Picker("Tag", selection: $app.s.noteMode) {
+                    ForEach(NoteInput.modes, id: \.id) { m in Text(m.label).tag(m.id) }
+                }
+                Picker("Skriv i feltet", selection: $app.s.noteField) {
+                    ForEach(fieldChoices, id: \.self) { f in Text("{\(f)}").tag(f) }
+                }
+                TextField("Noten starter med (fx Indkøb)", text: $app.s.noteStart)
+            } header: { Text("Input") } footer: {
+                Text(NoteInput.modes.first { $0.id == app.s.noteMode }?.help ?? "")
+            }
+
+            Section {
+                Toggle("Afslør ved Færdig", isOn: $app.s.noteAutoReveal)
+                if app.s.noteAutoReveal {
+                    Picker("Vent først", selection: $app.s.noteDelay) {
+                        Text("0 sek.").tag(0.0)
+                        Text("2 sek.").tag(2.0)
+                        Text("5 sek.").tag(5.0)
+                        Text("10 sek.").tag(10.0)
+                        Text("30 sek.").tag(30.0)
+                    }
+                }
+                Toggle("Tøm noten bagefter", isOn: $app.s.noteClear)
+            } header: { Text("Afsløring") } footer: {
+                Text("Tøm noten: teksten forsvinder efter Færdig, som om den aldrig blev gemt.")
+            }
+        }
+        .navigationTitle("Noter")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var fieldChoices: [String] {
+        var f = app.s.allFields
+        if !f.contains(app.s.noteField) { f.append(app.s.noteField) }
+        return f
     }
 }
 

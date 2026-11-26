@@ -28,6 +28,7 @@ struct HomeView: View {
         .sheet(isPresented: $app.loginOpen) { LoginSheet() }
         .sheet(isPresented: $app.settingsOpen) { SettingsView() }
         .fullScreenCover(isPresented: $app.lockOpen) { LockScreen().environment(app) }
+        .fullScreenCover(isPresented: $app.notesOpen) { NotesView().environment(app) }
     }
 
     // MARK: Konto
@@ -93,7 +94,7 @@ struct HomeView: View {
                     .autocorrectionDisabled()
                     .foregroundStyle(Theme.accent)
                     if let v = app.values[key], v.source != "manuelt" {
-                        Image(systemName: v.source == "låseskærm" ? "lock.fill" : "antenna.radiowaves.left.and.right")
+                        Image(systemName: v.source == "låseskærm" ? "lock.fill" : v.source == "noter" ? "note.text" : "antenna.radiowaves.left.and.right")
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 }
@@ -139,18 +140,30 @@ struct HomeView: View {
 
     private var lockSection: some View {
         Section {
-            Button { app.lockOpen = true } label: {
-                HStack(spacing: 12) {
-                    SettingsIcon(symbol: "lock.fill", color: .indigo)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Åbn låseskærm").foregroundStyle(.primary)
-                        Text(lockSubtitle).font(.footnote).foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+            inputRow("Låseskærm", lockSubtitle, "lock.fill", .indigo) { app.lockOpen = true }
+            inputRow("Noter", noteSubtitle, "note.text", .yellow) { app.notesOpen = true }
+        } header: { Text("Input") } footer: {
+            Text("Tilbage til Bio: 5 hurtige tryk øverst til højre.")
+        }
+    }
+
+    private func inputRow(_ title: String, _ sub: String, _ symbol: String, _ color: Color, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                SettingsIcon(symbol: symbol, color: color)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).foregroundStyle(.primary)
+                    Text(sub).font(.footnote).foregroundStyle(.secondary)
                 }
+                Spacer()
+                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
             }
-        } header: { Text("Input") }
+        }
+    }
+
+    private var noteSubtitle: String {
+        let mode = NoteInput.modes.first { $0.id == app.s.noteMode }?.label ?? app.s.noteMode
+        return "\(mode) → \(app.s.noteField)"
     }
 
     // MARK: Hjælpere
