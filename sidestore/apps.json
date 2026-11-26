@@ -20,6 +20,15 @@
       },
       "versions": [
         {
+          "version": "0.6.0",
+          "buildVersion": "11",
+          "date": "2026-11-26T21:20:54Z",
+          "localizedDescription": "Build 11",
+          "downloadURL": "https://github.com/Thyxo/Insta-Prediction/releases/download/v0.6.0-11/InstaPrediction.ipa",
+          "size": 427691,
+          "minOSVersion": "18.0"
+        },
+        {
           "version": "0.5.0",
           "buildVersion": "10",
           "date": "2026-11-26T17:06:43Z",
@@ -74,10 +83,10 @@
           "minOSVersion": "18.0"
         }
       ],
-      "version": "0.5.0",
-      "versionDate": "2026-11-26T17:06:43Z",
-      "downloadURL": "https://github.com/Thyxo/Insta-Prediction/releases/download/v0.5.0-10/InstaPrediction.ipa",
-      "size": 377876
+      "version": "0.6.0",
+      "versionDate": "2026-11-26T21:20:54Z",
+      "downloadURL": "https://github.com/Thyxo/Insta-Prediction/releases/download/v0.6.0-11/InstaPrediction.ipa",
+      "size": 427691
     }
   ],
   "news": []
