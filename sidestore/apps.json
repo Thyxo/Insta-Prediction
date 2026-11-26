@@ -14,8 +14,25 @@
       "iconURL": "https://raw.githubusercontent.com/Thyxo/Insta-Prediction/main/icons/icon-512.png",
       "tintColor": "C13584",
       "category": "utilities",
-      "appPermissions": { "entitlements": [], "privacy": {} },
-      "versions": []
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {}
+      },
+      "versions": [
+        {
+          "version": "0.1.0",
+          "buildVersion": "1",
+          "date": "2026-11-26T10:48:36Z",
+          "localizedDescription": "Build 1",
+          "downloadURL": "https://github.com/Thyxo/Insta-Prediction/releases/download/v0.1.0-1/InstaPrediction.ipa",
+          "size": 233369,
+          "minOSVersion": "18.0"
+        }
+      ],
+      "version": "0.1.0",
+      "versionDate": "2026-11-26T10:48:36Z",
+      "downloadURL": "https://github.com/Thyxo/Insta-Prediction/releases/download/v0.1.0-1/InstaPrediction.ipa",
+      "size": 233369
     }
   ],
   "news": []
