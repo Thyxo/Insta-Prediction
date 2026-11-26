@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bio – Insta Prediction</title>
+<meta name="description" content="Bio skriver tilskuerens tanke i din rigtige Instagram-bio. Mentalisme-app til iPhone med falsk iOS 26-låseskærm.">
+<meta name="theme-color" content="#0a0a14">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta property="og:title" content="Bio – forudsigelsen står i din rigtige Instagram-bio">
+<meta property="og:description" content="Tilskueren tænker på et kort. Du låser telefonen op med det. Det står i din Instagram-bio.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --bg:#0a0a14; --card:rgb(255 255 255 / .06); --line:rgb(255 255 255 / .10);
+  --fg:#f5f5fa; --muted:#a2a3b5; --violet:#8c5cff; --pink:#ff4f8b; --orange:#ff9f4a;
+  --grad:linear-gradient(135deg,#6b5cff,#c13584 55%,#ff9f4a);
+  --body:"Inter",-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){ --bg:#0a0a14; } }
+:root[data-theme="light"]{ --bg:#0a0a14; }
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+html,body{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 var(--body);overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(40% 35% at 15% 10%,rgb(107 92 255 / .35),transparent 70%),
+             radial-gradient(35% 30% at 90% 40%,rgb(193 53 132 / .28),transparent 70%),
+             radial-gradient(40% 30% at 20% 95%,rgb(255 159 74 / .16),transparent 70%)}
+a{color:inherit}
+.wrap{width:100%;max-width:1080px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-left))}
+h1,h2,h3{margin:0;line-height:1.08;letter-spacing:-.02em}
+.eyebrow{font:700 12px/1 var(--body);letter-spacing:.16em;text-transform:uppercase;color:#c9b8ff}
+.muted{color:var(--muted)}
+.glass{background:var(--card);border:1px solid var(--line);border-radius:24px;
+  backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4)}
+
+nav{position:sticky;top:0;z-index:20;padding-top:env(safe-area-inset-top);background:rgb(10 10 20 / .6);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:58px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:18px}
+.brand img{width:30px;height:30px;border-radius:8px}
+nav .links{display:flex;gap:18px;font-size:14px;color:var(--muted)}
+nav .links a{text-decoration:none}
+@media (max-width:560px){nav .links{display:none}}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border-radius:999px;
+  font:700 15px var(--body);text-decoration:none;border:0;cursor:pointer;color:#fff;transition:transform .2s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--grad);box-shadow:0 12px 34px -10px rgb(193 53 132 / .7)}
+.btn.ghost{background:var(--card);border:1px solid var(--line)}
+
+.hero{padding:56px 0 30px}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:36px;align-items:center}
+@media (max-width:860px){.hero-grid{grid-template-columns:1fr}}
+.hero h1{font-size:clamp(38px,7vw,70px);font-weight:800;margin:14px 0 16px}
+.hero h1 span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:clamp(17px,2.2vw,20px);color:#cfd0de;max-width:36ch;margin:0 0 26px}
+.cta{display:flex;flex-wrap:wrap;gap:12px}
+.ticks{margin-top:18px;font-size:13px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.ticks span::before{content:"✓ ";color:#9dffb0}
+
+/* telefoner */
+.duo{display:flex;justify-content:center;gap:12px;align-items:flex-start}
+.phone{width:min(42vw,230px);container-type:inline-size;aspect-ratio:393/852;border-radius:38px;padding:7px;background:#1b1b22;
+  box-shadow:0 30px 60px -20px #000,inset 0 0 0 1.5px #3a3a44;position:relative;flex:none}
+.phone .scr{position:absolute;inset:7px;border-radius:32px;overflow:hidden}
+.phone .island{position:absolute;top:12px;left:50%;width:30%;height:5.2%;margin-left:-15%;background:#000;border-radius:20px;z-index:3}
+.phone.b{margin-top:44px}
+.lock{background:linear-gradient(180deg,#25407a 0%,#6b4aa8 45%,#d77c6a 100%);color:#fff;text-align:center}
+.lock .sb{display:flex;justify-content:space-between;padding:5cqw 8cqw 0;font:600 4.2cqw var(--body)}
+.lock .date{margin-top:12%;font:600 5.6cqw var(--body);opacity:.92}
+.lock .clock{font:500 37cqw/1 "Oswald",sans-serif;letter-spacing:-.02em;transform:scaleY(1.32);transform-origin:top;margin-top:2px;
+  background:linear-gradient(#fff,rgb(255 255 255 / .82));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lock .qb{position:absolute;bottom:7%;width:15%;aspect-ratio:1;border-radius:50%;background:rgb(255 255 255 / .18);
+  border:1px solid rgb(255 255 255 / .3);display:grid;place-items:center;font-size:12px}
+.lock .qb.l{left:11%} .lock .qb.r{right:11%}
+.lock .home{position:absolute;bottom:2%;left:50%;width:36%;height:4px;margin-left:-18%;border-radius:3px;background:#fff}
+.ig{background:#000;color:#fff;font-family:var(--body);text-align:left}
+.ig .top{padding:15cqw 5cqw 3cqw;font:700 5.2cqw var(--body);display:flex;justify-content:space-between}
+.ig .row{display:flex;align-items:center;gap:5cqw;padding:6px 5cqw}
+.ig .av{width:22cqw;height:22cqw;border-radius:50%;background:var(--grad);padding:2px;flex:none}
+.ig .av i{display:block;width:100%;height:100%;border-radius:50%;background:#222 url(icon-180.png) center/cover;border:2px solid #000}
+.ig .stats{display:flex;gap:3.5cqw;font-size:3.6cqw;text-align:center;min-width:0}
+.ig .stats b{display:block;font-size:4.6cqw}
+.ig .name{padding:4px 5cqw 0;font:600 4.4cqw var(--body)}
+.ig .bio{padding:2px 5cqw;font-size:4.4cqw;line-height:1.4;min-height:30px}
+.ig .bio mark{background:none;color:#fff}
+.ig .bio .caret{display:inline-block;width:1px;height:10px;background:#fff;vertical-align:-1px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.ig .btns{display:flex;gap:5px;padding:8px 12px}
+.ig .btns span{flex:1;background:#262626;border-radius:6px;font:600 9px/22px var(--body);text-align:center}
+.ig .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:10px}
+.ig .grid i{aspect-ratio:1;background:linear-gradient(135deg,#2b2b3a,#3d2b4a)}
+.ig .grid i:nth-child(3n+2){background:linear-gradient(135deg,#40324f,#2a3550)}
+.cap{margin-top:10px;font-size:12px;color:var(--muted);text-align:center}
+
+section{padding:56px 0}
+section h2{font-size:clamp(28px,4.5vw,42px);font-weight:800;margin:10px 0 14px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px}
+@media (max-width:760px){.steps{grid-template-columns:1fr}}
+.step{padding:22px}
+.step .n{width:34px;height:34px;border-radius:50%;background:var(--grad);display:grid;place-items:center;font-weight:800;margin-bottom:12px}
+.step h3{font-size:19px;margin-bottom:6px}
+.step p{margin:0;color:var(--muted);font-size:15px}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+.box{padding:22px}
+.box h3{font-size:18px;margin-bottom:10px}
+ol,ul{margin:0;padding-left:20px} li{margin:6px 0}
+table{width:100%;border-collapse:collapse;font-size:15px}
+td,th{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:13px}
+code,kbd{font:600 13px ui-monospace,SFMono-Regular,Menlo,monospace;background:rgb(255 255 255 / .08);padding:2px 6px;border-radius:6px}
+.src{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.src code{flex:1;min-width:0;overflow-wrap:anywhere;padding:10px 12px;display:block}
+.pad{display:grid;grid-template-columns:repeat(3,48px);gap:8px;margin-top:10px}
+.pad span{height:48px;border-radius:50%;background:rgb(255 255 255 / .1);display:grid;place-items:center;font-weight:700}
+.note{padding:18px 20px;border-left:3px solid var(--orange)}
+footer{padding:40px 0 calc(40px + env(safe-area-inset-bottom));color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+  <a class="brand" href="#"><img src="icon-180.png" alt="">Bio</a>
+  <div class="links"><a href="#saadan">Sådan virker det</a><a href="#install">Installér</a><a href="#rutine">Rutine</a><a href="#genveje">Genveje</a></div>
+</div></nav>
+
+<header class="hero"><div class="wrap hero-grid">
+  <div>
+    <div class="eyebrow">Mentalisme til iPhone</div>
+    <h1>Tanken står i din <span>rigtige</span> Instagram-bio.</h1>
+    <p class="lead">Tilskueren tænker på et kort og "låser din telefon op" med det. Koden er forkert, men da de finder dig på Instagram på deres egen telefon, står kortet i din bio.</p>
+    <div class="cta">
+      <a class="btn primary" href="#install">Installér Bio</a>
+      <a class="btn ghost" href="#rutine">Se rutinen</a>
+    </div>
+    <div class="ticks"><span>Ægte profil</span><span>Deres egen telefon</span><span>Ingen force</span></div>
+  </div>
+  <div>
+    <div class="duo">
+      <div class="phone a"><div class="island"></div><div class="scr lock">
+        <div class="sb"><span id="sbTime">13.24</span><span>●●● ⌔ ▭</span></div>
+        <div class="date" id="lockDate">tors. 26. nov.</div>
+        <div class="clock" id="lockClock">13.24</div>
+        <div class="qb l">🔦</div><div class="qb r">📷</div><div class="home"></div>
+      </div></div>
+      <div class="phone b"><div class="island"></div><div class="scr ig">
+        <div class="top"><span>danieltryller ⌄</span><span>☰</span></div>
+        <div class="row"><div class="av"><i></i></div>
+          <div class="stats"><div><b>48</b>opslag</div><div><b>2.391</b>følgere</div><div><b>312</b>følger</div></div></div>
+        <div class="name">Daniel · Tryllekunstner</div>
+        <div class="bio"><mark id="bioText"></mark><span class="caret"></span></div>
+        <div class="btns"><span>Følg</span><span>Besked</span></div>
+        <div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div></div>
+    </div>
+    <div class="cap">Venstre: din telefon (Bio). Højre: tilskuerens telefon.</div>
+  </div>
+</div></header>
+
+<section id="saadan"><div class="wrap">
+  <div class="eyebrow">Sådan virker det</div>
+  <h2>Tre trin. Ét øjeblik.</h2>
+  <div class="steps">
+    <div class="step glass"><div class="n">1</div><h3>Input</h3><p>Tilskueren taster sit kort som pinkode på en falsk iOS 26-låseskærm. Eller du taster selv på et usynligt tastatur.</p></div>
+    <div class="step glass"><div class="n">2</div><h3>Bioen skiftes</h3><p>Bio skriver kortet ind i en skabelon og opdaterer din rigtige Instagram-bio. Hængelåsen giver dig et diskret tegn.</p></div>
+    <div class="step glass"><div class="n">3</div><h3>Afsløring</h3><p>Tilskueren søger dig frem på sin egen telefon. Forudsigelsen står der allerede.</p></div>
+  </div>
+</div></section>
+
+<section id="install"><div class="wrap">
+  <div class="eyebrow">Installér</div>
+  <h2>Med SideStore</h2>
+  <div class="two">
+    <div class="box glass">
+      <h3>1 · SideStore-source</h3>
+      <ol>
+        <li>Har du ikke SideStore: installér det fra en computer med <a href="https://iloader.app">iLoader</a>.</li>
+        <li>SideStore → <b>Sources</b> → <b>+</b> → indsæt:</li>
+      </ol>
+      <div class="src"><code id="srcUrl">https://raw.githubusercontent.com/Thyxo/Insta-Prediction/main/sidestore/apps.json</code>
+        <button class="btn ghost" id="copy" type="button" style="min-height:40px">Kopiér</button></div>
+      <ol start="3"><li>Installér <b>Bio</b>. Opdateringer kommer af sig selv.</li></ol>
+    </div>
+    <div class="box glass">
+      <h3>2 · Første opsætning</h3>
+      <ol>
+        <li><b>Log ind</b> på Instagram i Bio (chippen øverst). Koden bliver på telefonen.</li>
+        <li><b>Urskrift:</b> ⚙︎ → Låseskærm → Vælg zip eller .otf fra Filer → vælg zip'en med iOS 26-urskrifterne. Tryk <b>Som min iPhone</b>.</li>
+        <li><b>Baggrund:</b> samme billede som din rigtige låseskærm.</li>
+        <li>Øv dig i <b>øve-tilstand</b> (orange chip). Tryk på chippen for at slå den fra før showet.</li>
+      </ol>
+    </div>
+  </div>
+</div></section>
+
+<section id="rutine"><div class="wrap">
+  <div class="eyebrow">Rutine</div>
+  <h2>Kortet som pinkode</h2>
+  <div class="two">
+    <div class="box glass">
+      <ol>
+        <li>Tryk <b>Låseskærm</b> i Bio.</li>
+        <li><i>"Tænk på et kort. Brug det som min pinkode: værdien og så kuløren som et tal."</i></li>
+        <li>De stryger op og taster fx <code>0132</code>. Koden ryster som forkert.</li>
+        <li>Efter 2 sek. skiftes bioen. Hængelåsen åbner kort.</li>
+        <li><i>"Ikke min kode … men tjek lige min Instagram."</i></li>
+        <li>Bagefter: 5 tryk øverst til højre → <b>↺ Nulstil</b>.</li>
+      </ol>
+    </div>
+    <div class="box glass">
+      <table>
+        <tr><th>Kulør</th><th>Ciffer</th><th>Eksempel</th></tr>
+        <tr><td>♣️ Klør</td><td>1</td><td><code>11</code> klør es</td></tr>
+        <tr><td>♥️ Hjerter</td><td>2</td><td><code>132</code> hjerter konge</td></tr>
+        <tr><td>♠️ Spar</td><td>3</td><td><code>73</code> spar 7</td></tr>
+        <tr><td>♦️ Ruder</td><td>4</td><td><code>104</code> ruder 10</td></tr>
+      </table>
+      <p class="muted" style="margin:12px 0 0;font-size:14px">Nuller er fyld i en 4-cifret kode: <code>0132</code> = <code>1320</code> = hjerter konge. Også muligt: tal, Mnemonica 1–52 og dato (DDMM).</p>
+    </div>
+  </div>
+</div></section>
+
+<section id="genveje"><div class="wrap">
+  <div class="eyebrow">Låseskærm</div>
+  <h2>Genveje</h2>
+  <div class="two">
+    <div class="box glass">
+      <table>
+        <tr><th>Hvad</th><th>Sådan</th></tr>
+        <tr><td>Kode-skærm</td><td>Stryg op</td></tr>
+        <tr><td>Usynligt tastatur</td><td>Langt tryk på uret</td></tr>
+        <tr><td>Sort skærm</td><td>Dobbelttryk · tryk vækker</td></tr>
+        <tr><td>Panik</td><td>Hold øverst til venstre 1 sek.</td></tr>
+        <tr><td>Tilbage til Bio</td><td>5 tryk øverst til højre</td></tr>
+      </table>
+    </div>
+    <div class="box glass">
+      <h3>Usynligt tastatur</h3>
+      <p class="muted" style="margin:0">I 8 sek. efter et langt tryk på uret er hele skærmen et tastatur. Tast og afslut med ✓.</p>
+      <div class="pad"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>✕</span><span>0</span><span>✓</span></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="tjek"><div class="wrap">
+  <div class="eyebrow">Før showet</div>
+  <h2>Tjekliste</h2>
+  <div class="two">
+    <div class="box glass"><ul>
+      <li>Øve-chippen er væk.</li>
+      <li>Chippen viser <b>@ditnavn</b> med grøn prik.</li>
+      <li>Standard-bioen ser naturlig ud.</li>
+      <li>Urskrift: grønt flueben. Baggrund: din egen.</li>
+      <li>Forstyr ikke er slået til.</li>
+    </ul></div>
+    <div class="box glass note">
+      <h3>Godt at vide</h3>
+      <p class="muted" style="margin:0">Instagram har ingen officiel måde at ændre bio på. Bio bruger de samme kald som instagram.com og venter mindst 15 sek. mellem ændringer. Det er imod Instagrams vilkår, og i værste fald kan kontoen blive låst. Bed tilskueren <b>søge</b> dig frem, så de ser den nyeste profil.</p>
+    </div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  Bio · Insta Prediction af <a href="https://github.com/Thyxo">Thyxo</a> · <a href="https://github.com/Thyxo/Insta-Prediction">Kildekode og fuld guide</a>
+</div></footer>
+
+<script>
+(function(){
+  // Uret i mockuppen følger den rigtige tid
+  function tick(){
+    var d=new Date(), t=d.getHours()+"."+String(d.getMinutes()).padStart(2,"0");
+    document.getElementById("lockClock").textContent=t;
+    document.getElementById("sbTime").textContent=t;
+    try{
+      var s=d.toLocaleDateString("da-DK",{weekday:"short",day:"numeric",month:"short"});
+      document.getElementById("lockDate").textContent=s;
+    }catch(e){}
+  }
+  tick(); setInterval(tick,10000);
+
+  // Bioen "skrives", som når Bio afslører
+  var full="🃏 Dit kort er hjerter konge", el=document.getElementById("bioText"), i=0;
+  var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function type(){
+    if(reduce){el.textContent=full;return}
+    el.textContent=Array.from(full).slice(0,i).join("");
+    i++;
+    if(i<=Array.from(full).length) setTimeout(type,70);
+    else setTimeout(function(){i=0;type()},4000);
+  }
+  setTimeout(type,900);
+
+  var b=document.getElementById("copy");
+  b.addEventListener("click",function(){
+    var u=document.getElementById("srcUrl").textContent;
+    try{navigator.clipboard.writeText(u).then(function(){b.textContent="Kopieret ✓";setTimeout(function(){b.textContent="Kopiér"},1800)})}catch(e){}
+  });
+})();
+</script>
+</body>
+</html>
