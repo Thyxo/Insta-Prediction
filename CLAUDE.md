@@ -19,7 +19,7 @@ Insta Prediction: native iOS-app (Swift/SwiftUI, XcodeGen, ingen .xcodeproj i gi
 - **Apples skrifter må ikke i repoet eller IPA'en** (repo og releases er offentlige). `ClockFonts.findOnDevice()` finder dem i iOS på telefonen (FontServices.framework m.fl.) ved første start og kopierer dem til Application Support/Fonts. Reserve: zip eller .otf fra Filer (`App/ZipReader.swift` pakker ud), filer lagt i Bio-mappen i Filer (Documents, `UIFileSharingEnabled`) hentes ved start, eller direkte link.
 
 ## Noter (input)
-- `Views/NotesView.swift`: falsk iOS 26 Noter (sort, gul, glas-knapper, første linje som overskrift, notelisten bag ‹). Ved ✓/tilbage (`textViewDidEndEditing`) → `AppState.noteCaptured` → `NoteInput.extract` (sidste | første | hele | ord | kort) → feltet `noteField` → evt. afsløring efter `noteDelay`. Ud: 5 tryk øverst til højre.
+- `Views/NotesView.swift`: falsk iOS 26 Noter, 1:1 efter ejerens skærmbilleder (mål i `enum M`; hvide ikoner, gylden markør og ✓, værktøjslinje over tastaturet, første linje som overskrift, notelisten bag ‹). Ved ✓/tilbage (`textViewDidEndEditing`) → `AppState.noteCaptured` → `NoteInput.extract` (sidste | første | hele | ord | kort) → feltet `noteField` → evt. afsløring efter `noteDelay`. Ud: 5 tryk øverst til højre.
 
 ## UI
 - Designsystem = iOS' egne komponenter, som ejerens app Mindtrace: `List`/`Form` i `.insetGrouped`, mørk, teal accent (`Theme.accent` i `Views/Theme.swift`), farvede ikon-firkanter (`SettingsIcon`), store pille-knapper (`PillButton`). Ingen egne baggrunde eller hjemmeside-agtige kort.
