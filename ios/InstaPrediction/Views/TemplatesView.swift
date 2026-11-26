@@ -34,7 +34,8 @@ struct TemplatesView: View {
             }
 
             Section("Filtre") {
-                ForEach(TemplateEngine.filterHelp, id: \.0) { f in
+                ForEach(TemplateEngine.filterHelp.indices, id: \.self) { i in
+                    let f = TemplateEngine.filterHelp[i]
                     HStack {
                         Text("|\(f.0)").font(.body.monospaced())
                         Spacer()
