@@ -19,7 +19,11 @@ Insta Prediction: native iOS-app (Swift/SwiftUI, XcodeGen, ingen .xcodeproj i gi
 - **Apples skrifter må ikke i repoet eller IPA'en** (repo og releases er offentlige). `ClockFonts.findOnDevice()` finder dem i iOS på telefonen (FontServices.framework m.fl.) ved første start og kopierer dem til Application Support/Fonts. Reserve: zip eller .otf fra Filer (`App/ZipReader.swift` pakker ud), filer lagt i Bio-mappen i Filer (Documents, `UIFileSharingEnabled`) hentes ved start, eller direkte link.
 
 ## Noter (input)
-- `Views/NotesView.swift`: falsk iOS 26 Noter, 1:1 efter ejerens skærmbilleder (mål i `enum M`; hvide ikoner, gylden markør og ✓, værktøjslinje over tastaturet, første linje som overskrift, notelisten bag ‹). Ved ✓/tilbage (`textViewDidEndEditing`) → `AppState.noteCaptured` → `NoteInput.extract` (sidste | første | hele | ord | kort) → feltet `noteField` → evt. afsløring efter `noteDelay`. Ud: 5 tryk øverst til højre.
+- `Views/NotesView.swift` (kun iOS 26): klon af iOS 26 Noter efter ejerens skærmoptagelse. Bygget på systemets egne dele (NavigationStack, `.searchable` + `DefaultToolbarItem(kind: .search)` i bundlinjen, `ToolbarSpacer`, `.glassProminent` ✓, `swipeActions`, `ShareLink`, Menu), så glas og animationer er ægte. Kun værktøjslinjen over tastaturet er tegnet.
+- Noterne (`Model/FakeNotes.swift`: sektioner/datoer som Noter, eksempel-noter) gemmes i `AppState.fakeNotes` og kan rettes i appen.
+- Kun noter oprettet i denne omgang tæller. Ved ✓/tilbage → `AppState.noteCaptured` → `NoteInput.extract` → feltet `noteField` → evt. afsløring efter `noteDelay`.
+- Ud: 5 tryk øverst til højre eller hold øverst til venstre i 1 sek.
+- Appen er dansk lokaliseret (`da.lproj`, `CFBundleLocalizations`), så systemtekster (Søg, Kopiér, Del, tastaturforslag) er danske.
 
 ## UI
 - Designsystem = iOS' egne komponenter, som ejerens app Mindtrace: `List`/`Form` i `.insetGrouped`, mørk, teal accent (`Theme.accent` i `Views/Theme.swift`), farvede ikon-firkanter (`SettingsIcon`), store pille-knapper (`PillButton`). Ingen egne baggrunde eller hjemmeside-agtige kort.

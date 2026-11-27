@@ -52,6 +52,7 @@ struct Settings: Codable, Equatable {
     var noteDelay = 2.0              // sek. før afsløring
     var noteClear = false            // tøm noten efter Færdig (så den "forsvinder")
     var noteStart = ""               // tekst noten starter med, fx "Indkøb"
+    var noteOpen = "ny"              // ny = åbner i en tom note, liste = åbner i notelisten
 
     init() {}
 

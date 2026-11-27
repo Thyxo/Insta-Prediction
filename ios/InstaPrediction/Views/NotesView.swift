@@ -1,325 +1,458 @@
-// Falsk Noter-app (iOS 26, mørk). Tilskueren skriver sin tanke; ved "Færdig" (✓) eller tilbage
-// tager Bio teksten (NoteInput) og afslører i bioen. Ud til Bio: 5 hurtige tryk øverst til højre.
+// Falsk Noter-app, klonet fra ejerens skærmoptagelse af iOS 26 Noter.
+// Bygget på iOS' egen navigation (NavigationStack, værktøjslinjer, søgefelt, swipe-handlinger),
+// så glas, animationer, stryg-tilbage og menuer er de ægte. Kun værktøjslinjen over tastaturet er tegnet.
+//
+// Tilskueren skriver i en ny note. Ved ✓ eller tilbage tager Bio teksten (NoteInput) og afslører.
+// Kun noter oprettet i denne omgang tæller, så du kan rette dine egne noter uden at afsløre noget.
+// Ud til Bio: 5 hurtige tryk øverst til højre (over batteriet) eller hold øverst til venstre i 1 sek.
 import SwiftUI
 import UIKit
 
-/// Markør og Færdig-knap (målt på iOS 26 Noter)
 private let notesGold = UIColor(red: 0.89, green: 0.70, blue: 0.24, alpha: 1)
-private let checkFill = Color(red: 0.85, green: 0.70, blue: 0.22)
-private let checkMark = Color(red: 1.0, green: 0.90, blue: 0.32)
-private let dimmed = Color(white: 0.42)
+private let gold = Color(notesGold)
 
-/// Mål i punkter, aflæst fra skærmbilleder af ægte Noter (iPhone 393 pt bred)
-private enum M {
-    static let side: CGFloat = 16          // knapper øverst fra kant
-    static let button: CGFloat = 44        // runde knapper og kapsel-højde
-    static let capItem: CGFloat = 46       // del-knap / … i kapslen
-    static let checkGap: CGFloat = 13      // kapsel → Færdig
-    static let barSide: CGFloat = 28       // bundlinje fra kant
-    static let bar: CGFloat = 47           // bundlinje højde
-    static let barItem: CGFloat = 55       // afstand mellem ikoner i bundlinjen
-    static let kbSide: CGFloat = 13        // værktøjslinje over tastatur fra kant
-    static let kbItem: CGFloat = 56.5
-    static let kbGap: CGFloat = 13         // værktøjslinje → tastatur
-}
-
+@available(iOS 26.0, *)
 struct NotesView: View {
     @Environment(AppState.self) private var app
-    @State private var text = ""
-    @State private var editing = false
-    @State private var showList = false
-    @State private var showDate = true
-    @State private var opened = Date()
+    @State private var path: [UUID] = []
+    @State private var search = ""
+    @State private var session: Set<UUID> = []
+    @State private var dated: Set<UUID> = []
+    @State private var pinnedOpen = true
     @State private var exitTaps: [Date] = []
+    @State private var started = false
 
     var body: some View {
-        ZStack(alignment: .top) {
-            Color.black.ignoresSafeArea()
-            if showList {
-                NotesList(title: firstLine, preview: secondLine, date: opened,
-                          open: { withAnimation(.snappy) { showList = false } },
-                          compose: {
-                              newNote()
-                              withAnimation(.snappy) { showList = false }
-                              DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { editing = true }
-                          })
-                .transition(.move(edge: .leading))
-            } else {
-                editor.transition(.move(edge: .trailing))
-            }
-            exitZone
+        NavigationStack(path: $path) {
+            list
+                .navigationDestination(for: UUID.self) { id in
+                    NoteEditor(id: id,
+                               counts: session.contains(id),
+                               showDate: dated.contains(id),
+                               compose: { compose(replacing: true) },
+                               delete: { delete(id); if !path.isEmpty { path.removeLast() } })
+                }
         }
+        .tint(gold)
         .preferredColorScheme(.dark)
-        .statusBarHidden(false)
-        .onAppear {
-            text = app.s.noteStart.isEmpty ? "" : app.s.noteStart + "\n"
-            opened = Date()
-            showDate = true
-        }
+        .overlay(alignment: .top) { exitZones }
+        .onAppear(perform: start)
     }
 
-    private var isEmpty: Bool { text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    // MARK: Start og ud
 
-    private func newNote() {
-        text = ""
-        opened = Date()
-        showDate = false   // ny note: ingen dato før den er gemt (som i Noter)
+    private func start() {
+        guard !started else { return }
+        started = true
+        guard app.s.noteOpen == "ny" else { return }
+        let n = FakeNote(text: app.s.noteStart.isEmpty ? "" : app.s.noteStart + "\n", date: Date())
+        app.fakeNotes.append(n)
+        session.insert(n.id)
+        dated.insert(n.id)   // åbnes som en note, der allerede findes (med dato øverst)
+        var t = Transaction()
+        t.disablesAnimations = true
+        withTransaction(t) { path = [n.id] }
     }
 
-    // MARK: Editor
-
-    private var editor: some View {
-        VStack(spacing: 0) {
-            topBar
-            NoteTextView(text: $text, editing: $editing, date: opened, showDate: showDate) { final in
-                app.noteCaptured(final)
-                if app.s.noteClear, NoteInput.extract(final, mode: app.s.noteMode) != nil {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { text = "" }
-                }
-            }
-        }
-        .overlay(alignment: .bottom) {
-            if editing { keyboardBar } else { bottomBar.offset(y: 5) }
-        }
+    private func leave() {
+        exitTaps = []
+        app.fakeNotes.removeAll { $0.isEmpty }
+        app.notesOpen = false
     }
 
-    private var topBar: some View {
-        HStack(spacing: 0) {
-            Button { editing = false; withAnimation(.snappy) { showList = true } } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 20, weight: .medium))
-                    .frame(width: M.button, height: M.button)
-                    .notesGlass(Circle())
-            }
-            Spacer()
-            HStack(spacing: 8) {
-                Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: 19, weight: .regular))
-                    .foregroundStyle(isEmpty ? dimmed : .white)
-                    .frame(width: M.capItem, height: M.button)
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 18, weight: .semibold))
-                    .frame(width: M.capItem, height: M.button)
-            }
-            .notesGlass(Capsule())
-            if editing {
-                Button { editing = false } label: {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 22, weight: .regular))
-                        .foregroundStyle(checkMark)
-                        .frame(width: M.button, height: M.button)
-                        .notesGlass(Circle(), tint: checkFill)
-                }
-                .padding(.leading, M.checkGap)
-                .transition(.scale.combined(with: .opacity))
-            }
-        }
-        .foregroundStyle(.white)
-        .buttonStyle(.plain)
-        .padding(.horizontal, M.side)
-        .animation(.snappy(duration: 0.25), value: editing)
-    }
-
-    /// Uden tastatur: kapsel med 4 værktøjer + ny note
-    private var bottomBar: some View {
-        HStack(spacing: 0) {
-            HStack(spacing: 0) {
-                tool("checklist")
-                tool("paperclip")
-                tool("pencil.tip.crop.circle")
-                tool("apple.writing.tools", fallback: "wand.and.stars")
-            }
-            .frame(height: M.bar)
-            .notesGlass(Capsule())
-            Spacer()
-            Button {
-                newNote()
-                editing = true
-            } label: {
-                Image(systemName: "square.and.pencil")
-                    .font(.system(size: 22, weight: .regular))
-                    .foregroundStyle(isEmpty ? dimmed : .white)
-                    .frame(width: M.bar, height: M.bar)
-                    .notesGlass(Circle())
-            }
-            .buttonStyle(.plain)
-            .disabled(isEmpty)
-        }
-        .foregroundStyle(.white)
-        .padding(.horizontal, M.barSide)
-    }
-
-    /// Over tastaturet: lang kapsel, sidste knap skåret af i kanten (den kan rulles i Noter)
-    private var keyboardBar: some View {
-        HStack(spacing: 0) {
-            tool("textformat", width: M.kbItem, size: 24)
-            tool("checklist", width: M.kbItem)
-            tool("tablecells", width: M.kbItem)
-            tool("paperclip", width: M.kbItem)
-            tool("pencil.tip.crop.circle", width: M.kbItem)
-            tool("apple.writing.tools", fallback: "wand.and.stars", width: M.kbItem)
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, minHeight: M.bar, maxHeight: M.bar)
-        .overlay(alignment: .trailing) {
-            Circle().fill(checkFill)
-                .frame(width: 38, height: 38)
-                .overlay(Image(systemName: "rectangle.split.3x1").font(.system(size: 13, weight: .bold)).foregroundStyle(checkMark).offset(x: -8))
-                .offset(x: 15)
-        }
-        .clipShape(Capsule())
-        .notesGlass(Capsule())
-        .foregroundStyle(.white)
-        .padding(.horizontal, M.kbSide)
-        .padding(.bottom, M.kbGap)
-    }
-
-    private func tool(_ name: String, fallback: String? = nil, width: CGFloat = M.barItem, size: CGFloat = 22) -> some View {
-        let sym = UIImage(systemName: name) != nil ? name : (fallback ?? name)
-        return Image(systemName: sym)
-            .font(.system(size: size, weight: .regular))
-            .frame(width: width, height: M.bar)
-    }
-
-    // MARK: Ud til Bio
-
-    private var exitZone: some View {
+    private var exitZones: some View {
         HStack {
+            Rectangle().fill(app.s.lockShowZones ? Color.yellow.opacity(0.2) : Color.clear)
+                .frame(width: 90, height: 56)
+                .contentShape(Rectangle())
+                .onLongPressGesture(minimumDuration: 1) { leave() }
             Spacer()
-            Rectangle()
-                .fill(app.s.lockShowZones ? Color.yellow.opacity(0.18) : Color.clear)
-                .frame(width: 90, height: 54)
+            Rectangle().fill(app.s.lockShowZones ? Color.yellow.opacity(0.2) : Color.clear)
+                .frame(width: 90, height: 56)
                 .contentShape(Rectangle())
                 .onTapGesture {
                     let now = Date()
                     exitTaps = exitTaps.filter { now.timeIntervalSince($0) < 2.5 } + [now]
-                    if exitTaps.count >= 5 {
-                        exitTaps = []
-                        editing = false
-                        app.notesOpen = false
-                    }
+                    if exitTaps.count >= 5 { leave() }
                 }
         }
         .ignoresSafeArea(edges: .top)
     }
 
-    private var lines: [String] {
-        text.components(separatedBy: .newlines).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+    // MARK: Noter
+
+    private func compose(replacing: Bool) {
+        let n = FakeNote(text: "", date: Date())
+        app.fakeNotes.append(n)
+        session.insert(n.id)
+        if replacing, !path.isEmpty {
+            var t = Transaction()
+            t.disablesAnimations = true
+            withTransaction(t) { path.removeLast() }
+            DispatchQueue.main.async { path.append(n.id) }
+        } else {
+            path.append(n.id)
+        }
     }
-    private var firstLine: String { lines.first ?? "Ny note" }
-    private var secondLine: String { lines.dropFirst().first ?? "Ingen yderligere tekst" }
-}
 
-// MARK: Noteliste ("‹ Mapper · Noter")
+    private func delete(_ id: UUID) {
+        withAnimation { app.fakeNotes.removeAll { $0.id == id } }
+    }
 
-private struct NotesList: View {
-    let title: String
-    let preview: String
-    let date: Date
-    let open: () -> Void
-    let compose: () -> Void
+    private func togglePin(_ id: UUID) {
+        guard let i = app.fakeNotes.firstIndex(where: { $0.id == id }) else { return }
+        withAnimation { app.fakeNotes[i].pinned.toggle() }
+    }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 19, weight: .semibold))
-                    .frame(width: 44, height: 44)
-                    .notesGlass(Circle())
-                Spacer()
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 18, weight: .medium))
-                    .frame(width: 44, height: 44)
-                    .notesGlass(Circle())
-            }
-            .foregroundStyle(.white)
-            .padding(.horizontal, 16)
+    // MARK: Liste
 
-            Text("Noter")
-                .font(.system(size: 34, weight: .bold))
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-
-            Text("I dag")
-                .font(.system(size: 20, weight: .bold))
-                .padding(.horizontal, 20)
-                .padding(.top, 18)
-                .padding(.bottom, 8)
-
-            Button(action: open) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(title).font(.system(size: 17, weight: .semibold)).lineLimit(1)
-                    HStack(spacing: 6) {
-                        Text(date, format: .dateTime.hour().minute()).foregroundStyle(.secondary)
-                        Text(preview).foregroundStyle(.secondary).lineLimit(1)
+    private var list: some View {
+        let now = Date()
+        let notes = FakeNotes.filter(app.fakeNotes.filter { !$0.isEmpty }, search)
+        let sections = FakeNotes.sections(notes, now: now)
+        return List {
+            ForEach(sections) { sec in
+                Section {
+                    if sec.title != "Fastgjort" || pinnedOpen {
+                        ForEach(sec.notes) { n in row(n, now: now) }
                     }
-                    .font(.system(size: 15))
-                    HStack(spacing: 4) {
-                        Image(systemName: "folder")
-                        Text("Noter")
+                } header: {
+                    HStack {
+                        Text(sec.title)
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundStyle(.white)
+                        Spacer()
+                        if sec.title == "Fastgjort" {
+                            Button {
+                                withAnimation(.snappy) { pinnedOpen.toggle() }
+                            } label: {
+                                Image(systemName: "chevron.down")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundStyle(gold)
+                                    .rotationEffect(.degrees(pinnedOpen ? 0 : -90))
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
-                    .font(.system(size: 13))
-                    .foregroundStyle(.secondary)
+                    .textCase(nil)
+                    .padding(.leading, -4)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 11)
-                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color(white: 0.11)))
             }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 16)
-
-            Spacer()
-
-            HStack {
-                Spacer()
-                Text("1 note").font(.system(size: 12)).foregroundStyle(.secondary)
-                Spacer()
+        }
+        .listStyle(.insetGrouped)
+        .listSectionSpacing(18)
+        .scrollContentBackground(.hidden)
+        .background(Color.black)
+        .navigationTitle("Noter")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbarRole(.editor)
+        .searchable(text: $search, prompt: "Søg")
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button { } label: { Image(systemName: "chevron.left") }
+                    .tint(.white)
             }
-            .overlay(alignment: .trailing) {
-                Button(action: compose) {
-                    Image(systemName: "square.and.pencil")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundStyle(.white)
-                        .frame(width: 48, height: 48)
-                        .notesGlass(Circle())
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Section {
+                        Button { } label: { Label("Vis som galleri", systemImage: "square.grid.2x2") }
+                        Button { } label: { Label("Vælg noter", systemImage: "checkmark.circle") }
+                    }
+                    Section {
+                        Button { } label: { Label("Sortér efter", systemImage: "arrow.up.arrow.down") }
+                        Button { } label: { Label("Gruppér efter dato", systemImage: "calendar") }
+                        Button { } label: { Label("Vis vedhæftede filer", systemImage: "paperclip") }
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
                 }
-                .buttonStyle(.plain)
+                .tint(.white)
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 6)
+            DefaultToolbarItem(kind: .search, placement: .bottomBar)
+            ToolbarSpacer(.flexible, placement: .bottomBar)
+            ToolbarItem(placement: .bottomBar) {
+                Button { compose(replacing: false) } label: { Image(systemName: "square.and.pencil") }
+                    .tint(.white)
+            }
+        }
+    }
+
+    private func row(_ n: FakeNote, now: Date) -> some View {
+        Button {
+            path.append(n.id)
+        } label: {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(n.title)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                HStack(spacing: 7) {
+                    Text(FakeNotes.dateLabel(n.date, now: now))
+                    Text(n.preview).lineLimit(1)
+                }
+                .font(.system(size: 15))
+                .foregroundStyle(Color(white: 0.56))
+            }
+            .padding(.vertical, 2)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .listRowBackground(Color(white: 0.11))
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            Button(role: .destructive) { delete(n.id) } label: { Label("Slet", systemImage: "trash") }
+            Button { } label: { Label("Flyt", systemImage: "folder") }
+                .tint(.indigo)
+        }
+        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+            Button { togglePin(n.id) } label: {
+                Label(n.pinned ? "Frigør" : "Fastgør", systemImage: n.pinned ? "pin.slash.fill" : "pin.fill")
+            }
+            .tint(.orange)
         }
     }
 }
 
-// MARK: Tekstfelt som i Noter: første linje er overskrift
+// MARK: Note
 
+@available(iOS 26.0, *)
+private struct NoteEditor: View {
+    @Environment(AppState.self) private var app
+    let id: UUID
+    let counts: Bool          // tæller som tilskuerens note
+    let showDate: Bool
+    let compose: () -> Void
+    let delete: () -> Void
+
+    @State private var text = ""
+    @State private var editing = false
+    @State private var formatBar = false
+    @State private var loaded = false
+    @State private var ref = TextViewRef()
+
+    private var isEmpty: Bool { text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    private var note: FakeNote? { app.fakeNotes.first { $0.id == id } }
+
+    var body: some View {
+        NoteTextView(text: $text, editing: $editing, date: note?.date ?? Date(), showDate: showDate, ref: ref) { final in
+            capture(final)
+        }
+        .background(Color.black)
+        .overlay(alignment: .bottom) {
+            if editing { keyboardBar.transition(.opacity) }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarRole(.editor)
+        .toolbar(editing ? .hidden : .visible, for: .bottomBar)
+        .toolbar {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                ShareLink(item: text) { Image(systemName: "square.and.arrow.up") }
+                    .disabled(isEmpty)
+                    .tint(.white)
+                Menu {
+                    Section {
+                        Button { ref.find() } label: { Label("Find i note", systemImage: "magnifyingglass") }
+                        Button { } label: { Label("Flyt note", systemImage: "folder") }
+                        Button { } label: { Label("Linjer og gitre", systemImage: "rectangle.split.3x3") }
+                    }
+                    Section {
+                        Button {
+                            if let i = app.fakeNotes.firstIndex(where: { $0.id == id }) { app.fakeNotes[i].pinned.toggle() }
+                        } label: {
+                            Label(note?.pinned == true ? "Frigør" : "Fastgør", systemImage: note?.pinned == true ? "pin.slash" : "pin")
+                        }
+                        Button { } label: { Label("Lås", systemImage: "lock") }
+                    }
+                    Section {
+                        Button(role: .destructive) { delete() } label: { Label("Slet", systemImage: "trash") }
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                }
+                .tint(.white)
+            }
+            if editing {
+                ToolbarSpacer(.fixed, placement: .topBarTrailing)
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { editing = false } label: { Image(systemName: "checkmark") }
+                        .buttonStyle(.glassProminent)
+                        .tint(gold)
+                }
+            }
+            ToolbarItemGroup(placement: .bottomBar) {
+                Button { } label: { Image(systemName: "checklist") }
+                attachMenu
+                Button { } label: { Image(systemName: "pencil.tip.crop.circle") }
+                Button { ref.writingTools() } label: { Image(systemName: "apple.writing.tools") }
+            }
+            ToolbarSpacer(.flexible, placement: .bottomBar)
+            ToolbarItem(placement: .bottomBar) {
+                Button { compose() } label: { Image(systemName: "square.and.pencil") }
+                    .disabled(isEmpty)
+            }
+        }
+        .tint(.white)
+        .animation(.snappy(duration: 0.25), value: editing)
+        .onAppear {
+            guard !loaded else { return }
+            loaded = true
+            text = note?.text ?? ""
+            if counts && !showDate {   // ny note: tastaturet kommer med det samme (som i Noter)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { if isEmpty { editing = true } }
+            }
+        }
+        .onChange(of: text) { _, t in
+            formatBar = false
+            if let i = app.fakeNotes.firstIndex(where: { $0.id == id }), app.fakeNotes[i].text != t {
+                app.fakeNotes[i].text = t
+                app.fakeNotes[i].date = Date()
+            }
+        }
+        .onDisappear {
+            capture(text)
+            if isEmpty { app.fakeNotes.removeAll { $0.id == id } }
+        }
+    }
+
+    private func capture(_ final: String) {
+        guard counts else { return }
+        app.noteCaptured(final)
+        if app.s.noteClear, NoteInput.extract(final, mode: app.s.noteMode) != nil {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { text = "" }
+        }
+    }
+
+    private var attachMenu: some View {
+        Menu {
+            Button { } label: { Label("Vælg foto eller video", systemImage: "photo.on.rectangle") }
+            Button { } label: { Label("Tag foto eller video", systemImage: "camera") }
+            Button { } label: { Label("Scan dokumenter", systemImage: "doc.viewfinder") }
+            Button { } label: { Label("Scan tekst", systemImage: "text.viewfinder") }
+            Button { } label: { Label("Vedhæft fil", systemImage: "doc") }
+        } label: {
+            Image(systemName: "paperclip")
+        }
+    }
+
+    // MARK: Værktøjslinje over tastaturet (som i Noter: kan rulles, sidste knap skåret af)
+
+    private var keyboardBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 0) {
+                if formatBar {
+                    key("bold") { ref.send("toggleBoldface:") }
+                    key("italic") { ref.send("toggleItalics:") }
+                    key("underline") { ref.send("toggleUnderline:") }
+                    key("strikethrough") { }
+                    key("highlighter") { }
+                    key("link") { }
+                    key("list.bullet") { }
+                    key("list.number") { }
+                    key("increase.indent") { }
+                    key("decrease.indent") { }
+                    key("text.quote") { }
+                } else {
+                    Button { formatBar = true } label: {
+                        Text("Aa").font(.system(size: 22, weight: .regular)).frame(width: 56.5, height: 47)
+                    }
+                    key("checklist") { }
+                    key("tablecells") { }
+                    Menu {
+                        Button { } label: { Label("Vælg foto eller video", systemImage: "photo.on.rectangle") }
+                        Button { } label: { Label("Tag foto eller video", systemImage: "camera") }
+                        Button { } label: { Label("Scan dokumenter", systemImage: "doc.viewfinder") }
+                        Button { } label: { Label("Vedhæft fil", systemImage: "doc") }
+                    } label: {
+                        Image(systemName: "paperclip").font(.system(size: 21)).frame(width: 56.5, height: 47)
+                    }
+                    key("pencil.tip.crop.circle") { }
+                    key("apple.writing.tools") { ref.writingTools() }
+                    if isEmpty {
+                        Circle().fill(gold).frame(width: 38, height: 38)
+                            .overlay(Image(systemName: "rectangle.split.3x1").font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(Color(red: 1, green: 0.9, blue: 0.32)))
+                            .padding(.leading, 6)
+                    } else {
+                        key("text.justify.left") { }
+                    }
+                    key("list.bullet.indent") { }
+                }
+            }
+            .padding(.horizontal, 2)
+        }
+        .frame(height: 47)
+        .foregroundStyle(.white)
+        .buttonStyle(.plain)
+        .clipShape(Capsule())
+        .glassEffect(.regular.interactive(), in: Capsule())
+        .padding(.horizontal, 13)
+        .padding(.bottom, 13)
+    }
+
+    private func key(_ symbol: String, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 21, weight: .regular))
+                .frame(width: 56.5, height: 47)
+                .contentShape(Rectangle())
+        }
+    }
+}
+
+// MARK: Tekstfeltet
+
+/// Giver knapperne adgang til tekstfeltet (fed, find, skriveværktøjer)
+final class TextViewRef {
+    weak var tv: UITextView?
+
+    func send(_ action: String) {
+        let sel = NSSelectorFromString(action)
+        guard let tv, tv.responds(to: sel) else { return }
+        tv.perform(sel, with: nil)
+    }
+
+    func writingTools() {
+        guard let tv else { return }
+        if !tv.isFirstResponder { tv.becomeFirstResponder() }
+        send("showWritingTools:")
+    }
+
+    func find() {
+        tv?.findInteraction?.presentFindNavigator(showingReplace: false)
+    }
+}
+
+/// Som i Noter: første linje er overskrift. Dato øverst kun på en note, der "fandtes" i forvejen.
 private struct NoteTextView: UIViewRepresentable {
     @Binding var text: String
     @Binding var editing: Bool
     let date: Date
     let showDate: Bool
+    let ref: TextViewRef
     let onEnd: (String) -> Void
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
     func makeUIView(context: Context) -> NoteUITextView {
         let tv = NoteUITextView()
-        tv.backgroundColor = .clear
+        tv.backgroundColor = .black
         tv.textColor = .white
         tv.tintColor = notesGold
         tv.keyboardAppearance = .dark
         tv.keyboardDismissMode = .interactive
         tv.alwaysBounceVertical = true
+        tv.isFindInteractionEnabled = true
+        tv.allowsEditingTextAttributes = true
         tv.textContainerInset = Self.insets(showDate)
         tv.delegate = context.coordinator
         tv.text = text
         Self.style(tv)
+        ref.tv = tv
         return tv
     }
 
     func updateUIView(_ tv: NoteUITextView, context: Context) {
         context.coordinator.parent = self
+        ref.tv = tv
         tv.dateLabel.text = Self.dateText(date)
         tv.dateLabel.isHidden = !showDate
         if tv.textContainerInset != Self.insets(showDate) { tv.textContainerInset = Self.insets(showDate) }
@@ -334,9 +467,8 @@ private struct NoteTextView: UIViewRepresentable {
         }
     }
 
-    /// Markøren står 27 pt fra kanten; 35 pt under knapperne med dato, 16 pt uden
     static func insets(_ date: Bool) -> UIEdgeInsets {
-        UIEdgeInsets(top: date ? 34 : 15, left: 22, bottom: 140, right: 22)
+        UIEdgeInsets(top: date ? 34 : 15, left: 22, bottom: 160, right: 22)
     }
 
     static func dateText(_ d: Date) -> String {
@@ -349,24 +481,22 @@ private struct NoteTextView: UIViewRepresentable {
     /// Overskrift (første linje) 28 pt fed, resten 17 pt
     static func style(_ tv: UITextView) {
         guard tv.markedTextRange == nil else { return }
-        let title = UIFont.systemFont(ofSize: 28, weight: .bold)
-        let body = UIFont.systemFont(ofSize: 17)
         let ns = tv.text as NSString
         let firstEnd = ns.range(of: "\n").location
         let titleLen = firstEnd == NSNotFound ? ns.length : firstEnd
         let sel = tv.selectedRange
         let st = tv.textStorage
         st.beginEditing()
-        st.setAttributes([.font: body, .foregroundColor: UIColor.white], range: NSRange(location: 0, length: ns.length))
+        st.setAttributes([.font: UIFont.systemFont(ofSize: 17), .foregroundColor: UIColor.white],
+                         range: NSRange(location: 0, length: ns.length))
         if titleLen > 0 {
-            st.addAttributes([.font: title], range: NSRange(location: 0, length: titleLen))
+            st.addAttributes([.font: UIFont.systemFont(ofSize: 28, weight: .bold)], range: NSRange(location: 0, length: titleLen))
         }
         st.endEditing()
         if tv.selectedRange != sel { tv.selectedRange = sel }
         typing(tv)
     }
 
-    /// Skriv med overskrift-skrift på første linje, ellers brødtekst
     static func typing(_ tv: UITextView) {
         let ns = tv.text as NSString
         let firstEnd = ns.range(of: "\n").location
@@ -383,15 +513,20 @@ private struct NoteTextView: UIViewRepresentable {
             parent.text = tv.text
             NoteTextView.style(tv)
         }
-        func textViewDidChangeSelection(_ tv: UITextView) {
-            NoteTextView.typing(tv)
-        }
-        func textViewDidBeginEditing(_ tv: UITextView) {
-            if !parent.editing { parent.editing = true }
-        }
+        func textViewDidChangeSelection(_ tv: UITextView) { NoteTextView.typing(tv) }
+        func textViewDidBeginEditing(_ tv: UITextView) { if !parent.editing { parent.editing = true } }
         func textViewDidEndEditing(_ tv: UITextView) {
             if parent.editing { parent.editing = false }
             parent.onEnd(tv.text)
+        }
+
+        /// Ingen "Autoudfyld"-boble (den har Noter ikke)
+        func textView(_ tv: UITextView, editMenuForTextIn range: NSRange, suggestedActions: [UIMenuElement]) -> UIMenu? {
+            UIMenu(children: suggestedActions.filter { el in
+                if let m = el as? UIMenu, m.identifier.rawValue.lowercased().contains("autofill") { return false }
+                let t = (el as? UIAction)?.title ?? (el as? UIMenu)?.title ?? ""
+                return !t.localizedCaseInsensitiveContains("autoudfyld") && !t.localizedCaseInsensitiveContains("autofill")
+            })
         }
     }
 }
@@ -412,24 +547,5 @@ final class NoteUITextView: UITextView {
     override func layoutSubviews() {
         super.layoutSubviews()
         dateLabel.frame = CGRect(x: 0, y: 9, width: bounds.width, height: 20)
-    }
-}
-
-// MARK: Glas
-
-private extension View {
-    @ViewBuilder
-    func notesGlass<S: Shape>(_ shape: S, tint: Color? = nil) -> some View {
-        #if compiler(>=6.2)
-        if #available(iOS 26.0, *) {
-            self.glassEffect(tint.map { Glass.regular.tint($0).interactive() } ?? Glass.regular.interactive(), in: shape)
-        } else {
-            self.background(shape.fill(tint ?? Color(white: 0.11)))
-                .overlay(shape.stroke(.white.opacity(0.10), lineWidth: 0.7))
-        }
-        #else
-        self.background(shape.fill(tint ?? Color(white: 0.11)))
-            .overlay(shape.stroke(.white.opacity(0.10), lineWidth: 0.7))
-        #endif
     }
 }

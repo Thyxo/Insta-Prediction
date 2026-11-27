@@ -93,5 +93,24 @@ for (inp, mode, want) in noteCases {
 }
 check(Settings().noteField == "ord", "noter: feltet ord som standard")
 
+// 8. Falske noter
+do {
+    var c = DateComponents(); c.year = 2026; c.month = 11; c.day = 27; c.hour = 8; c.minute = 45
+    let now = FakeNotes.calendar.date(from: c)!
+    func ago(_ d: Int) -> Date { FakeNotes.calendar.date(byAdding: .day, value: -d, to: now)! }
+    check(FakeNotes.dateLabel(now, now: now) == "08.45", "noter: i dag = klokkeslæt")
+    check(FakeNotes.dateLabel(ago(1), now: now) == "i går", "noter: i går")
+    check(FakeNotes.dateLabel(ago(5), now: now) == "søndag", "noter: ugedag (\(FakeNotes.dateLabel(ago(5), now: now)))")
+    check(FakeNotes.dateLabel(ago(28), now: now) == "30.10.2026", "noter: dato (\(FakeNotes.dateLabel(ago(28), now: now)))")
+    check(FakeNotes.sectionTitle(ago(3), now: now) == "Sidste 7 dage", "noter: sidste 7 dage")
+    check(FakeNotes.sectionTitle(ago(20), now: now) == "Sidste 30 dage", "noter: sidste 30 dage")
+    check(FakeNotes.sectionTitle(ago(60), now: now) == "September", "noter: måned")
+    check(FakeNotes.sectionTitle(ago(400), now: now) == "2025", "noter: år")
+    let secs = FakeNotes.sections(FakeNotes.seed(now: now) + [FakeNote(text: "Hej", date: now)], now: now)
+    check(secs.map(\.title) == ["Fastgjort", "I dag", "I går", "Sidste 7 dage", "Sidste 30 dage", "Oktober", "September"], "noter: sektioner \(secs.map(\.title))")
+    check(FakeNote(text: "\n Indkøb \nMælk", date: now).title == "Indkøb" && FakeNote(text: "Indkøb", date: now).preview == "Ingen yderligere tekst", "noter: titel/preview")
+    check(FakeNotes.filter(FakeNotes.seed(now: now), "mælk").count == 2, "noter: søg")
+}
+
 print(failures == 0 ? "ALLE TESTS OK" : "\(failures) FEJL")
 exit(failures == 0 ? 0 : 1)

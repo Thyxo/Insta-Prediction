@@ -41,6 +41,12 @@ final class AppState {
     var settingsOpen = false
     var lockOpen = false
     var notesOpen = false
+    /// Noterne i den falske Noter-app (gemmes, så du kan rette dem som i en rigtig Noter)
+    var fakeNotes: [FakeNote] = AppState.loadNotes() {
+        didSet {
+            if let d = try? JSONEncoder().encode(fakeNotes) { UserDefaults.standard.set(d, forKey: "insta.notes.v1") }
+        }
+    }
     /// Tælles op ved input fra låseskærmen og ved gennemført afsløring (hængelåsen blinker)
     var lockPulse = 0
     var wallpaper: UIImage? = Wallpaper.load()
@@ -178,6 +184,14 @@ final class AppState {
             }
         }
     }
+
+    static func loadNotes() -> [FakeNote] {
+        if let d = UserDefaults.standard.data(forKey: "insta.notes.v1"),
+           let n = try? JSONDecoder().decode([FakeNote].self, from: d) { return n }
+        return FakeNotes.seed(now: Date())
+    }
+
+    func resetNotes() { fakeNotes = FakeNotes.seed(now: Date()) }
 
     /// Noter: tilskueren har trykket Færdig. Gentaget tekst ignoreres.
     func noteCaptured(_ note: String) {

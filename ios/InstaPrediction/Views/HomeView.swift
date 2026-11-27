@@ -28,7 +28,16 @@ struct HomeView: View {
         .sheet(isPresented: $app.loginOpen) { LoginSheet() }
         .sheet(isPresented: $app.settingsOpen) { SettingsView() }
         .fullScreenCover(isPresented: $app.lockOpen) { LockScreen().environment(app) }
-        .fullScreenCover(isPresented: $app.notesOpen) { NotesView().environment(app) }
+        .fullScreenCover(isPresented: $app.notesOpen) {
+            if #available(iOS 26.0, *) {
+                NotesView().environment(app)
+            } else {
+                VStack(spacing: 16) {
+                    Text("Noter kræver iOS 26")
+                    Button("Luk") { app.notesOpen = false }
+                }
+            }
+        }
     }
 
     // MARK: Konto
@@ -143,7 +152,7 @@ struct HomeView: View {
             inputRow("Låseskærm", lockSubtitle, "lock.fill", .indigo) { app.lockOpen = true }
             inputRow("Noter", noteSubtitle, "note.text", .yellow) { app.notesOpen = true }
         } header: { Text("Input") } footer: {
-            Text("Tilbage til Bio: 5 hurtige tryk øverst til højre.")
+            Text("Tilbage til Bio: 5 hurtige tryk øverst til højre. I Noter også: hold øverst til venstre.")
         }
     }
 

@@ -70,14 +70,15 @@ Du har fået informationen på anden vis (peek, force, memdeck).
 ## 5. Rutine: tilskueren skriver i Noter
 **Opsætning:** ⚙︎ → **Noter** → *Tag:* **Sidste linje** → feltet `{ord}`. Skabelon **Ord**.
 
-1. Tryk **Noter** i Bio. Telefonen ligner nu din Noter-app.
-2. *"Skriv et ord, du tænker på, i min note. Tryk på ✓, når du er færdig."*
-3. Tilskueren skriver og trykker ✓ (eller tilbage). Bio tager teksten og skifter bioen efter 2 sek.
-4. Slå **Tøm noten bagefter** til, hvis teksten skal forsvinde.
-5. *"Tjek lige min Instagram."*
-6. Tilbage til Bio: 5 hurtige tryk øverst til højre.
+Bios Noter er en klon af iOS 26 Noter: noteliste med Fastgjort/I går/Sidste 7 dage, søgefelt, swipe (Slet, Flyt, Fastgør), del-ark, menuer, Find i note og Apples skriveværktøjer. Ret listens noter, så de ligner dine egne.
 
-**Tag:** sidste linje, første linje, hele noten, sidste ord eller et kort ("hjerter konge", "KH").
+1. Tryk **Noter** i Bio. Telefonen viser en tom note (eller notelisten, se *Åbner i*).
+2. *"Skriv et ord, du tænker på. Tryk ✓, når du er færdig."*
+3. Tilskueren skriver og trykker ✓ eller tilbage. Bio tager teksten og skifter bioen efter 2 sek.
+4. *"Tjek lige min Instagram."*
+5. Ud til Bio: **5 hurtige tryk øverst til højre** eller **hold øverst til venstre i 1 sek.**
+
+Kun noter oprettet, mens Noter er åben, tæller. **Tag:** sidste linje, første linje, hele noten, sidste ord eller et kort ("hjerter konge", "KH"). **Tøm noten bagefter** får teksten til at forsvinde.
 Bruger du **Noter+**, virker det også via relæet (felt `force.name`).
 
 ## 6. Låseskærm: genveje

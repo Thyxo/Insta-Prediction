@@ -121,7 +121,17 @@ struct NoteSettings: View {
                     Label("Åbn Noter", systemImage: "play.fill").bold()
                 }
             } footer: {
-                Text("Tilskueren skriver i noten og trykker ✓ (Færdig) eller tilbage. Så tager Bio teksten. Tilbage til Bio: 5 hurtige tryk øverst til højre.")
+                Text("Tilskueren skriver i noten og trykker ✓ (Færdig) eller tilbage. Så tager Bio teksten. Tilbage til Bio: 5 hurtige tryk øverst til højre, eller hold øverst til venstre i 1 sek.")
+            }
+
+            Section {
+                Picker("Åbner i", selection: $app.s.noteOpen) {
+                    Text("Tom note").tag("ny")
+                    Text("Notelisten").tag("liste")
+                }
+                Button("Nulstil noterne til eksempler", role: .destructive) { app.resetNotes() }
+            } header: { Text("Noter-appen") } footer: {
+                Text("Kun noter, der oprettes, mens Noter er åben, bliver brugt. Ret gerne listens noter i Noter, så de ligner dine egne (\(app.fakeNotes.count) noter).")
             }
 
             Section {
