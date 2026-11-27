@@ -44,6 +44,7 @@ final class AppState {
     /// Tilskuerens note lige nu (sendes, hvis telefonen låses)
     @ObservationIgnored var activeNoteID: UUID?
     @ObservationIgnored private var noteRevealed = ""
+    @ObservationIgnored private var noteIdleTask: Task<Void, Never>?
     /// Noterne i den falske Noter-app (gemmes, så du kan rette dem som i en rigtig Noter)
     var fakeNotes: [FakeNote] = AppState.loadNotes() {
         didSet {
@@ -201,7 +202,7 @@ final class AppState {
     func resetNotes() { fakeNotes = FakeNotes.seed(now: Date()) }
 
     /// Noter: tilskueren har trykket Færdig. Gentaget tekst ignoreres.
-    func noteCaptured(_ note: String, now immediate: Bool = false) {
+    func noteCaptured(_ note: String, now immediate: Bool = false, idle: Bool = false) {
         guard let text = NoteInput.extract(note, mode: s.noteMode) else {
             if !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, !immediate {
                 add(.warn, "Noter: intet brugbart som \(s.noteMode)")
@@ -214,7 +215,7 @@ final class AppState {
             values[s.noteField] = FieldValue(text: text, at: Self.nowMs, source: "noter")
             add(.info, "\(s.noteField) ← \(text) (noter\(immediate ? ", låst" : ""))")
         }
-        guard immediate ? s.noteOnLock : s.noteAutoReveal else { return }
+        guard idle || (immediate ? s.noteOnLock : s.noteAutoReveal) else { return }
         lockRevealTask?.cancel()
         let delay = immediate ? 0 : s.noteDelay
         // Telefonen kan være låst: bed iOS om tid til at gøre afsløringen færdig
@@ -223,12 +224,28 @@ final class AppState {
             defer { bg.end() }
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             guard let self, !Task.isCancelled else { return }
+            while self.busy {   // en tidligere afsløring er i gang: send den nyeste bagefter
+                try? await Task.sleep(nanoseconds: 300_000_000)
+                if Task.isCancelled { return }
+            }
             if self.rendered.missing.isEmpty {
                 await self.reveal()
                 self.noteRevealed = text
             } else {
                 self.add(.warn, "Venter på: \(self.rendered.missing.joined(separator: ", "))")
             }
+        }
+    }
+
+    /// Tilskueren skriver: send, når de har holdt pause i noteIdleSec sekunder
+    func noteTyped(_ note: String) {
+        noteIdleTask?.cancel()
+        guard s.noteIdleSec > 0 else { return }
+        let sec = s.noteIdleSec
+        noteIdleTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(sec * 1_000_000_000))
+            guard let self, !Task.isCancelled else { return }
+            self.noteCaptured(note, now: true, idle: true)
         }
     }
 

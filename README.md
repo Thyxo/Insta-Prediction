@@ -27,7 +27,7 @@ Eller hent IPA'en direkte: https://github.com/Thyxo/Insta-Prediction/releases/la
 Første gang: slå **Indstillinger → Anonymitet & sikkerhed → Udviklertilstand** til. Med et gratis Apple-ID skal apps fornyes hver 7. dag (SideStore kan gøre det selv).
 
 ## 2. Første opsætning (5 minutter)
-1. **Log ind:** åbn Bio → tryk **Log ind** (chippen øverst) → log ind på Instagram som normalt, også med to-trins-kode. Din kode bliver på telefonen. Din nuværende bio gemmes som *standard-bio*.
+1. **Log ind:** åbn Bio → tryk **Log ind** → log ind på Instagram som normalt, også med to-trins-kode. Din kode bliver på telefonen. Bio husker login (også i LiveContainer). Din nuværende bio gemmes som *standard-bio*.
 2. **Øve-tilstand** er slået til fra start (orange chip "Øve"). Så skrives der intet til Instagram. Prøv alt igennem først.
 3. **Urskrift** (så uret ligner din rigtige låseskærm): ⚙︎ → **Låseskærm** → **Urskrift** → **Vælg zip eller .otf fra Filer** → vælg zip-filen med iOS 26-urskrifterne. Eller læg zip-filen i **Filer → På min iPhone → Bio**, så henter Bio den selv. Tryk **Som min iPhone (målt)**.
 4. **Baggrund:** ⚙︎ → **Låseskærm** → **Vælg baggrund** → samme billede som din rigtige låseskærm.
@@ -73,9 +73,8 @@ Du har fået informationen på anden vis (peek, force, memdeck).
 Bios Noter er en klon af iOS 26 Noter: noteliste med Fastgjort/I går/Sidste 7 dage, søgefelt, swipe (Slet, Flyt, Fastgør), del-ark, menuer, Find i note og Apples skriveværktøjer. Ret listens noter, så de ligner dine egne.
 
 1. Tryk **Noter** i Bio. Telefonen viser en tom note (eller notelisten, se *Åbner i*).
-2. *"Skriv et ord, du tænker på. Tryk ✓, når du er færdig."*
-3. Tilskueren skriver og trykker ✓ eller tilbage. Bio tager teksten og skifter bioen efter 2 sek.
-   **Eller:** tilskueren skriver og **låser telefonen med sideknappen** og lægger den på bordet. Bio sender med det samme, mens skærmen er sort (*Send når telefonen låses*, slået til som standard). Der kommer ingen notifikation på den låste skærm.
+2. *"Skriv lige hvad du vil i min note."* Tilskueren skal ikke trykke ✓.
+3. Når de stopper med at skrive i 3 sek., sender Bio. Låser de telefonen med sideknappen og lægger den på bordet, sendes der med det samme. Skriver de videre, sendes den nyeste tekst. Ingen notifikation på den låste skærm.
 4. *"Tjek lige min Instagram."*
 5. Ud til Bio: **5 hurtige tryk øverst til højre** eller **hold øverst til venstre i 1 sek.**
 

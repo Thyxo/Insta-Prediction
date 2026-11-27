@@ -52,6 +52,7 @@ struct Settings: Codable, Equatable {
     var noteDelay = 2.0              // sek. før afsløring
     var noteClear = false            // tøm noten efter Færdig (så den "forsvinder")
     var noteStart = ""               // tekst noten starter med, fx "Indkøb"
+    var noteIdleSec = 3.0            // send, når tilskueren har stoppet med at skrive så længe (0 = fra)
     var noteOnLock = true            // send med det samme, når telefonen låses (sideknap) midt i noten
     var noteOpen = "ny"              // ny = åbner i en tom note, liste = åbner i notelisten
 

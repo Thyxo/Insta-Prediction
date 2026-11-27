@@ -305,6 +305,7 @@ private struct NoteEditor: View {
         }
         .onChange(of: text) { _, t in
             formatBar = false
+            if counts { app.noteTyped(t) }
             if let i = app.fakeNotes.firstIndex(where: { $0.id == id }), app.fakeNotes[i].text != t {
                 app.fakeNotes[i].text = t
                 app.fakeNotes[i].date = Date()

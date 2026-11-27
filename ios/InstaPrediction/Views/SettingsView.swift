@@ -147,6 +147,13 @@ struct NoteSettings: View {
             }
 
             Section {
+                Picker("Send når de stopper med at skrive", selection: $app.s.noteIdleSec) {
+                    Text("Fra").tag(0.0)
+                    Text("Efter 2 sek.").tag(2.0)
+                    Text("Efter 3 sek.").tag(3.0)
+                    Text("Efter 5 sek.").tag(5.0)
+                    Text("Efter 10 sek.").tag(10.0)
+                }
                 Toggle("Send når telefonen låses", isOn: $app.s.noteOnLock)
                 Toggle("Afslør ved Færdig", isOn: $app.s.noteAutoReveal)
                 if app.s.noteAutoReveal {
@@ -160,7 +167,7 @@ struct NoteSettings: View {
                 }
                 Toggle("Tøm noten bagefter", isOn: $app.s.noteClear)
             } header: { Text("Afsløring") } footer: {
-                Text("Send når telefonen låses: tilskueren skriver og trykker på sideknappen. Bioen skiftes med det samme, mens telefonen ligger på bordet. Tøm noten: teksten forsvinder efter Færdig.")
+                Text("Ingen ✓ nødvendig: Bio sender, når tilskueren holder pause, og igen med det samme, hvis de låser telefonen. Skriver de videre, sendes den nyeste tekst (højst hvert 15. sek.). Tøm noten: teksten forsvinder efter Færdig.")
             }
         }
         .navigationTitle("Noter")

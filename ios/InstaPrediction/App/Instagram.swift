@@ -55,12 +55,25 @@ final class Instagram {
 
     // MARK: Session
 
+    /// Cookies fra login-vinduet. Bio gemmer også selv en kopi (CookieVault), fordi WebKit ikke altid
+    /// husker login mellem starter (fx i LiveContainer). Mangler WebKit sessionen, lægges kopien tilbage.
     func cookies() async -> [HTTPCookie] {
+        let now = Date()
         let all: [HTTPCookie] = await withCheckedContinuation { cont in
             store.getAllCookies { cont.resume(returning: $0) }
         }
-        let now = Date()
-        return all.filter { $0.domain.hasSuffix("instagram.com") && ($0.expiresDate.map { $0 > now } ?? true) }
+        var ig = all.filter { $0.domain.hasSuffix("instagram.com") && ($0.expiresDate.map { $0 > now } ?? true) }
+        if ig.contains(where: { $0.name == "sessionid" && !$0.value.isEmpty }) {
+            CookieVault.save(ig)
+        } else if let saved = CookieVault.load(), saved.contains(where: { $0.name == "sessionid" }) {
+            for c in saved {
+                await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+                    store.setCookie(c) { cont.resume() }
+                }
+            }
+            ig = saved
+        }
+        return ig
     }
 
     func isLoggedIn() async -> Bool {
@@ -68,6 +81,7 @@ final class Instagram {
     }
 
     func logout() async {
+        CookieVault.clear()
         let ds = WKWebsiteDataStore.default()
         let types = WKWebsiteDataStore.allWebsiteDataTypes()
         let records: [WKWebsiteDataRecord] = await withCheckedContinuation { cont in
@@ -169,10 +183,15 @@ final class Instagram {
         guard let http else { return }
         var headers: [String: String] = [:]
         for (k, v) in http.allHeaderFields { if let k = k as? String, let v = v as? String { headers[k] = v } }
-        for c in HTTPCookie.cookies(withResponseHeaderFields: headers, for: url) {
+        let fresh = HTTPCookie.cookies(withResponseHeaderFields: headers, for: url)
+        for c in fresh {
             await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
                 store.setCookie(c) { cont.resume() }
             }
+        }
+        if !fresh.isEmpty, var saved = CookieVault.load() {
+            for c in fresh { saved.removeAll { $0.name == c.name }; saved.append(c) }
+            CookieVault.save(saved)
         }
     }
 
@@ -182,4 +201,47 @@ final class Instagram {
         func e(_ s: String) -> String { s.addingPercentEncoding(withAllowedCharacters: allowed) ?? s }
         return form.map { "\(e($0.0))=\(e($0.1))" }.joined(separator: "&")
     }
+}
+
+/// Bios egen kopi af Instagram-cookies i appens Application Support (kun på telefonen, aldrig delt).
+/// Filen kan læses, også når telefonen er låst (efter første oplåsning), så afsløringen virker med sort skærm.
+enum CookieVault {
+    private struct Stored: Codable {
+        var name, value, domain, path: String
+        var expires: Date?
+        var secure: Bool
+        var httpOnly: Bool
+    }
+
+    private static var url: URL {
+        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.appendingPathComponent("instagram-session.json")
+    }
+
+    static func save(_ cookies: [HTTPCookie]) {
+        let list = cookies.map {
+            Stored(name: $0.name, value: $0.value, domain: $0.domain, path: $0.path,
+                   expires: $0.expiresDate, secure: $0.isSecure, httpOnly: $0.isHTTPOnly)
+        }
+        guard let data = try? JSONEncoder().encode(list) else { return }
+        try? data.write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+    }
+
+    static func load() -> [HTTPCookie]? {
+        guard let data = try? Data(contentsOf: url),
+              let list = try? JSONDecoder().decode([Stored].self, from: data) else { return nil }
+        let now = Date()
+        let cookies = list.compactMap { c -> HTTPCookie? in
+            if let e = c.expires, e < now { return nil }
+            var p: [HTTPCookiePropertyKey: Any] = [.name: c.name, .value: c.value, .domain: c.domain, .path: c.path]
+            if let e = c.expires { p[.expires] = e }
+            if c.secure { p[.secure] = "TRUE" }
+            if c.httpOnly { p[HTTPCookiePropertyKey("HttpOnly")] = "TRUE" }
+            return HTTPCookie(properties: p)
+        }
+        return cookies.isEmpty ? nil : cookies
+    }
+
+    static func clear() { try? FileManager.default.removeItem(at: url) }
 }

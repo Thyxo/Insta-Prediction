@@ -22,6 +22,7 @@ Insta Prediction: native iOS-app (Swift/SwiftUI, XcodeGen, ingen .xcodeproj i gi
 - `Views/NotesView.swift` (kun iOS 26): klon af iOS 26 Noter efter ejerens skærmoptagelse. Bygget på systemets egne dele (NavigationStack, `.searchable` + `DefaultToolbarItem(kind: .search)` i bundlinjen, `ToolbarSpacer`, `.glassProminent` ✓, `swipeActions`, `ShareLink`, Menu), så glas og animationer er ægte. Kun værktøjslinjen over tastaturet er tegnet.
 - Noterne (`Model/FakeNotes.swift`: sektioner/datoer som Noter, eksempel-noter) gemmes i `AppState.fakeNotes` og kan rettes i appen.
 - Kun noter oprettet i denne omgang tæller. Ved ✓/tilbage → `AppState.noteCaptured` → `NoteInput.extract` → feltet `noteField` → evt. afsløring efter `noteDelay`.
+- **Pause sender:** hver tastning i tilskuerens note kalder `AppState.noteTyped`; efter `noteIdleSec` (standard 3) uden tastning → `noteCaptured(now: true, idle: true)`. En ventende afsløring venter på `busy` og sender så den nyeste tekst.
 - **Låsning sender:** når scenePhase bliver inactive/background med tilskuerens note åben (`AppState.activeNoteID`), kaldes `noteCaptured(now: true)` uden ventetid (`noteOnLock`). `BackgroundTime` (beginBackgroundTask) + lydløs keeper (startes mens Noter er åben) giver tid til kaldet. Ingen notifikationer, mens Noter/låseskærm vises (de ville lyse op på bordet).
 - Ud: 5 tryk øverst til højre eller hold øverst til venstre i 1 sek.
 - Appen er dansk lokaliseret (`da.lproj`, `CFBundleLocalizations`), så systemtekster (Søg, Kopiér, Del, tastaturforslag) er danske.
@@ -44,6 +45,7 @@ Insta Prediction: native iOS-app (Swift/SwiftUI, XcodeGen, ingen .xcodeproj i gi
   - skriv A: `POST /api/v1/accounts/set_biography/` (`raw_text`), rører kun bioen
   - skriv B: `POST /api/v1/web/accounts/edit/` (hele formularen). Send altid alle felter fra `web_form_data`, ellers kan navn/link blive tømt. Stop hvis `username` mangler.
   - Headers: `X-IG-App-ID: 936619743392459`, `X-CSRFToken` (cookie `csrftoken`), `X-Requested-With`, `Referer`.
+- **Login huskes af Bio selv:** `CookieVault` gemmer Instagram-cookies i Application Support (fil-beskyttelse untilFirstUserAuthentication) og lægger dem tilbage i WebKit, hvis WebKit har glemt dem (sker i LiveContainer). Log ud sletter filen.
 - **Samme user agent** i login-vinduet og i kaldene (`Instagram.userAgent`).
 - **Ræk ikke ud efter kodeordet.** Login sker kun i WKWebView; vi læser cookies, aldrig felter.
 - **Øve-tilstand er standard** ved første start. Den må ikke slås fra automatisk.
