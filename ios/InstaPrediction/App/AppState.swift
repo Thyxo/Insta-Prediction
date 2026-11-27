@@ -45,6 +45,7 @@ final class AppState {
     @ObservationIgnored var activeNoteID: UUID?
     @ObservationIgnored private var noteRevealed = ""
     @ObservationIgnored private var noteIdleTask: Task<Void, Never>?
+    @ObservationIgnored private var noteLastKey: Date?
     /// Noterne i den falske Noter-app (gemmes, så du kan rette dem som i en rigtig Noter)
     var fakeNotes: [FakeNote] = AppState.loadNotes() {
         didSet {
@@ -220,6 +221,9 @@ final class AppState {
         let delay = immediate ? 0 : s.noteDelay
         // Telefonen kan være låst: bed iOS om tid til at gøre afsløringen færdig
         let bg = BackgroundTime()
+        let why = idle ? "pause" : immediate ? "låsning" : "Færdig"
+        let started = Date()
+        let lastKey = noteLastKey
         lockRevealTask = Task { [weak self] in
             defer { bg.end() }
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
@@ -231,6 +235,7 @@ final class AppState {
             if self.rendered.missing.isEmpty {
                 await self.reveal()
                 self.noteRevealed = text
+                self.logNoteTiming(why: why, started: started, lastKey: lastKey)
             } else {
                 self.add(.warn, "Venter på: \(self.rendered.missing.joined(separator: ", "))")
             }
@@ -239,6 +244,7 @@ final class AppState {
 
     /// Tilskueren skriver: send, når de har holdt pause i noteIdleSec sekunder
     func noteTyped(_ note: String) {
+        noteLastKey = Date()
         noteIdleTask?.cancel()
         guard s.noteIdleSec > 0 else { return }
         let sec = s.noteIdleSec
@@ -247,6 +253,18 @@ final class AppState {
             guard let self, !Task.isCancelled else { return }
             self.noteCaptured(note, now: true, idle: true)
         }
+    }
+
+    /// Fx "Noter: på Instagram 1,8 sek. efter pause · 4,8 sek. efter sidste tast"
+    private func logNoteTiming(why: String, started: Date, lastKey: Date?) {
+        let ok = log.first?.kind == .ok
+        func sec(_ d: Date) -> String {
+            String(format: "%.1f", Date().timeIntervalSince(d)).replacingOccurrences(of: ".", with: ",")
+        }
+        var t = "Noter: \(ok ? (s.practice ? "øve-afsløring" : "på Instagram") : "ikke sendt") \(sec(started)) sek. efter \(why)"
+        if let k = lastKey { t += " · \(sec(k)) sek. efter sidste tast" }
+        if UIApplication.shared.applicationState != .active { t += " · telefonen var låst" }
+        add(ok ? .ok : .warn, t)
     }
 
     /// Noter er åben: hold appen i live, så afsløringen når ud, selv om telefonen låses

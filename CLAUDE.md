@@ -23,6 +23,7 @@ Insta Prediction: native iOS-app (Swift/SwiftUI, XcodeGen, ingen .xcodeproj i gi
 - Noterne (`Model/FakeNotes.swift`: sektioner/datoer som Noter, eksempel-noter) gemmes i `AppState.fakeNotes` og kan rettes i appen.
 - Kun noter oprettet i denne omgang tæller. Ved ✓/tilbage → `AppState.noteCaptured` → `NoteInput.extract` → feltet `noteField` → evt. afsløring efter `noteDelay`.
 - **Pause sender:** hver tastning i tilskuerens note kalder `AppState.noteTyped`; efter `noteIdleSec` (standard 3) uden tastning → `noteCaptured(now: true, idle: true)`. En ventende afsløring venter på `busy` og sender så den nyeste tekst.
+- Efter hver Noter-afsløring logges tid fra udløser (pause/låsning/Færdig) og fra sidste tast (`logNoteTiming`), vist nederst på forsiden.
 - **Låsning sender:** når scenePhase bliver inactive/background med tilskuerens note åben (`AppState.activeNoteID`), kaldes `noteCaptured(now: true)` uden ventetid (`noteOnLock`). `BackgroundTime` (beginBackgroundTask) + lydløs keeper (startes mens Noter er åben) giver tid til kaldet. Ingen notifikationer, mens Noter/låseskærm vises (de ville lyse op på bordet).
 - Ud: 5 tryk øverst til højre eller hold øverst til venstre i 1 sek.
 - Appen er dansk lokaliseret (`da.lproj`, `CFBundleLocalizations`), så systemtekster (Søg, Kopiér, Del, tastaturforslag) er danske.
