@@ -37,6 +37,8 @@ struct NotesView: View {
         .preferredColorScheme(.dark)
         .overlay(alignment: .top) { exitZones }
         .onAppear(perform: start)
+        .onAppear { app.notesShown(true) }
+        .onDisappear { app.notesShown(false) }
     }
 
     // MARK: Start og ud
@@ -296,6 +298,7 @@ private struct NoteEditor: View {
             guard !loaded else { return }
             loaded = true
             text = note?.text ?? ""
+            if counts { app.activeNoteID = id }
             if counts && !showDate {   // ny note: tastaturet kommer med det samme (som i Noter)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { if isEmpty { editing = true } }
             }
@@ -308,6 +311,7 @@ private struct NoteEditor: View {
             }
         }
         .onDisappear {
+            if app.activeNoteID == id { app.activeNoteID = nil }
             capture(text)
             if isEmpty { app.fakeNotes.removeAll { $0.id == id } }
         }

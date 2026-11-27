@@ -75,6 +75,7 @@ Bios Noter er en klon af iOS 26 Noter: noteliste med Fastgjort/I går/Sidste 7 d
 1. Tryk **Noter** i Bio. Telefonen viser en tom note (eller notelisten, se *Åbner i*).
 2. *"Skriv et ord, du tænker på. Tryk ✓, når du er færdig."*
 3. Tilskueren skriver og trykker ✓ eller tilbage. Bio tager teksten og skifter bioen efter 2 sek.
+   **Eller:** tilskueren skriver og **låser telefonen med sideknappen** og lægger den på bordet. Bio sender med det samme, mens skærmen er sort (*Send når telefonen låses*, slået til som standard). Der kommer ingen notifikation på den låste skærm.
 4. *"Tjek lige min Instagram."*
 5. Ud til Bio: **5 hurtige tryk øverst til højre** eller **hold øverst til venstre i 1 sek.**
 

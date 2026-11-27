@@ -41,6 +41,9 @@ final class AppState {
     var settingsOpen = false
     var lockOpen = false
     var notesOpen = false
+    /// Tilskuerens note lige nu (sendes, hvis telefonen låses)
+    @ObservationIgnored var activeNoteID: UUID?
+    @ObservationIgnored private var noteRevealed = ""
     /// Noterne i den falske Noter-app (gemmes, så du kan rette dem som i en rigtig Noter)
     var fakeNotes: [FakeNote] = AppState.loadNotes() {
         didSet {
@@ -101,7 +104,10 @@ final class AppState {
             scanFontFolder()
             if relay == nil || relayStatus != "online" { connectRelay() }
             Task { await checkLogin() }
+        case .inactive:
+            noteOnLeave()
         case .background:
+            noteOnLeave()
             if !keeper.running { relay?.stop(); relayStatus = "off" }
         default: break
         }
@@ -152,6 +158,7 @@ final class AppState {
 
     func clearValues() {
         values = [:]
+        noteRevealed = ""
         arm()
     }
 
@@ -194,28 +201,46 @@ final class AppState {
     func resetNotes() { fakeNotes = FakeNotes.seed(now: Date()) }
 
     /// Noter: tilskueren har trykket Færdig. Gentaget tekst ignoreres.
-    func noteCaptured(_ note: String) {
+    func noteCaptured(_ note: String, now immediate: Bool = false) {
         guard let text = NoteInput.extract(note, mode: s.noteMode) else {
-            if !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            if !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, !immediate {
                 add(.warn, "Noter: intet brugbart som \(s.noteMode)")
             }
             return
         }
-        if values[s.noteField]?.text == text, values[s.noteField]?.source == "noter" { return }
-        values[s.noteField] = FieldValue(text: text, at: Self.nowMs, source: "noter")
-        add(.info, "\(s.noteField) ← \(text) (noter)")
-        guard s.noteAutoReveal else { return }
+        let same = values[s.noteField]?.text == text && values[s.noteField]?.source == "noter"
+        if same && (!immediate || noteRevealed == text) { return }
+        if !same {
+            values[s.noteField] = FieldValue(text: text, at: Self.nowMs, source: "noter")
+            add(.info, "\(s.noteField) ← \(text) (noter\(immediate ? ", låst" : ""))")
+        }
+        guard immediate ? s.noteOnLock : s.noteAutoReveal else { return }
         lockRevealTask?.cancel()
-        let delay = s.noteDelay
+        let delay = immediate ? 0 : s.noteDelay
+        // Telefonen kan være låst: bed iOS om tid til at gøre afsløringen færdig
+        let bg = BackgroundTime()
         lockRevealTask = Task { [weak self] in
+            defer { bg.end() }
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             guard let self, !Task.isCancelled else { return }
             if self.rendered.missing.isEmpty {
                 await self.reveal()
+                self.noteRevealed = text
             } else {
                 self.add(.warn, "Venter på: \(self.rendered.missing.joined(separator: ", "))")
             }
         }
+    }
+
+    /// Noter er åben: hold appen i live, så afsløringen når ud, selv om telefonen låses
+    func notesShown(_ shown: Bool) {
+        if shown { keeper.start() } else { activeNoteID = nil; updateKeepAlive() }
+    }
+
+    /// Telefonen låses / appen forlades midt i en note: send med det samme
+    private func noteOnLeave() {
+        guard notesOpen, let id = activeNoteID, let n = fakeNotes.first(where: { $0.id == id }) else { return }
+        noteCaptured(n.text, now: true)
     }
 
     /// Panik på låseskærmen: drop ventende afsløring og låseskærmens værdi
@@ -307,7 +332,7 @@ final class AppState {
             values[key] = FieldValue(text: hit.value, at: at, source: path)
             changed = true
             add(.info, "\(key) ← \(hit.value)")
-            if s.notify { Notifier.post(key, hit.value) }
+            if s.notify && !notesOpen && !lockOpen { Notifier.post(key, hit.value) }
         }
         if changed, s.autoReveal, fields.allSatisfy({ values[$0] != nil }), rendered.missing.isEmpty {
             Task { await reveal() }
@@ -376,7 +401,7 @@ final class AppState {
             lockPulse += 1
             add(.ok, "ØVE · \(label): \(text)")
             haptic(.success)
-            if s.notify { Notifier.post("Øve: \(label)", text) }
+            if s.notify && !notesOpen && !lockOpen { Notifier.post("Øve: \(label)", text) }
             publishStatus(text, ok: true)
             return true
         }
@@ -393,7 +418,7 @@ final class AppState {
             add(confirmed ? .ok : .warn, "\(label) (\(method)): " + (confirmed ? "bekræftet" : "sendt, men ikke bekræftet"))
             lastError = ""
             haptic(.success)
-            if s.notify { Notifier.post("✓ \(label)", text) }
+            if s.notify && !notesOpen && !lockOpen { Notifier.post("✓ \(label)", text) }
             publishStatus(text, ok: true)
             return true
         } catch {
@@ -401,7 +426,7 @@ final class AppState {
             lastError = error.localizedDescription
             add(.error, "\(label) fejlede: \(error.localizedDescription)")
             haptic(.error)
-            if s.notify { Notifier.post("Fejl: \(label)", error.localizedDescription) }
+            if s.notify && !notesOpen && !lockOpen { Notifier.post("Fejl: \(label)", error.localizedDescription) }
             publishStatus(text, ok: false)
             return false
         }
@@ -451,5 +476,23 @@ enum Wallpaper {
         let size = CGSize(width: img.size.width * scale, height: img.size.height * scale)
         let out = UIGraphicsImageRenderer(size: size).image { _ in img.draw(in: CGRect(origin: .zero, size: size)) }
         try? out.jpegData(compressionQuality: 0.9)?.write(to: url, options: .atomic)
+    }
+}
+
+/// Ekstra tid fra iOS, så en afsløring bliver færdig, selv om telefonen låses midt i den
+@MainActor
+final class BackgroundTime {
+    private var id = UIBackgroundTaskIdentifier.invalid
+
+    init() {
+        id = UIApplication.shared.beginBackgroundTask(withName: "Afslør") { [weak self] in
+            MainActor.assumeIsolated { self?.end() }
+        }
+    }
+
+    func end() {
+        guard id != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(id)
+        id = .invalid
     }
 }

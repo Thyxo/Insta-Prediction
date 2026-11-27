@@ -22,6 +22,7 @@ Insta Prediction: native iOS-app (Swift/SwiftUI, XcodeGen, ingen .xcodeproj i gi
 - `Views/NotesView.swift` (kun iOS 26): klon af iOS 26 Noter efter ejerens skærmoptagelse. Bygget på systemets egne dele (NavigationStack, `.searchable` + `DefaultToolbarItem(kind: .search)` i bundlinjen, `ToolbarSpacer`, `.glassProminent` ✓, `swipeActions`, `ShareLink`, Menu), så glas og animationer er ægte. Kun værktøjslinjen over tastaturet er tegnet.
 - Noterne (`Model/FakeNotes.swift`: sektioner/datoer som Noter, eksempel-noter) gemmes i `AppState.fakeNotes` og kan rettes i appen.
 - Kun noter oprettet i denne omgang tæller. Ved ✓/tilbage → `AppState.noteCaptured` → `NoteInput.extract` → feltet `noteField` → evt. afsløring efter `noteDelay`.
+- **Låsning sender:** når scenePhase bliver inactive/background med tilskuerens note åben (`AppState.activeNoteID`), kaldes `noteCaptured(now: true)` uden ventetid (`noteOnLock`). `BackgroundTime` (beginBackgroundTask) + lydløs keeper (startes mens Noter er åben) giver tid til kaldet. Ingen notifikationer, mens Noter/låseskærm vises (de ville lyse op på bordet).
 - Ud: 5 tryk øverst til højre eller hold øverst til venstre i 1 sek.
 - Appen er dansk lokaliseret (`da.lproj`, `CFBundleLocalizations`), så systemtekster (Søg, Kopiér, Del, tastaturforslag) er danske.
 

@@ -147,6 +147,7 @@ struct NoteSettings: View {
             }
 
             Section {
+                Toggle("Send når telefonen låses", isOn: $app.s.noteOnLock)
                 Toggle("Afslør ved Færdig", isOn: $app.s.noteAutoReveal)
                 if app.s.noteAutoReveal {
                     Picker("Vent først", selection: $app.s.noteDelay) {
@@ -159,7 +160,7 @@ struct NoteSettings: View {
                 }
                 Toggle("Tøm noten bagefter", isOn: $app.s.noteClear)
             } header: { Text("Afsløring") } footer: {
-                Text("Tøm noten: teksten forsvinder efter Færdig, som om den aldrig blev gemt.")
+                Text("Send når telefonen låses: tilskueren skriver og trykker på sideknappen. Bioen skiftes med det samme, mens telefonen ligger på bordet. Tøm noten: teksten forsvinder efter Færdig.")
             }
         }
         .navigationTitle("Noter")
